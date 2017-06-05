@@ -1,0 +1,383 @@
+package faiznoeris.tbitugaspraktek.temubalikinformasi;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+/**
+ * Created by Vellfire on 01/05/2017.
+ */
+
+public class DBHelper extends SQLiteOpenHelper {
+
+    private String cek_kata, id, katadasar, konten;
+
+    private static final String DATABASE_NAME = "TBI.db";
+    private static final String KATADASAR_TABLE_NAME = "tb_katadasar";
+    private static final String KATADASAR_COLUMN_ID = "id";
+    private static final String KATADASAR_COLUMN_KATADASAR = "katadasar";
+
+
+    private static final String DATA_STOPLIST_TABLE_NAME = "tb_data_stoplist";
+    private static final String DATA_STEMMING_TABLE_NAME = "tb_data_stemming";
+    private static final String DATA_UTAMA_TABLE_NAME = "tb_data_utama";
+
+    private static final String DATA_COLUMN_ID = "id";
+    public static final String DATA_COLUMN_IDKONTEN = "idkonten";
+    public static final String DATA_COLUMN_KONTEN = "konten";
+    public static final String DATA_COLUMN_JUDUL = "judul";
+    public static final String DATA_COLUMN_REMOVEDWORD = "removedword";
+
+
+    private static final String QUERY_CHECK_TB_KATADASAR_SIZE = "SELECT count(*) FROM " + KATADASAR_TABLE_NAME;
+    private static final String QUERY_CHECK_TB_DATAUTAMA_SIZE = "SELECT count(*) FROM " + DATA_UTAMA_TABLE_NAME;
+    private static final String QUERY_CHECK_TB_DATASTOPLIST_SIZE = "SELECT count(*) FROM " + DATA_STOPLIST_TABLE_NAME;
+    private static final String QUERY_CHECK_TB_DATASTEMMING_SIZE = "SELECT count(*) FROM " + DATA_STEMMING_TABLE_NAME;
+
+/*
+    private String QUERY_CHECK_KATADASAR = "SELECT * FROM " + KATADASAR_TABLE_NAME + " WHERE " + KATADASAR_COLUMN_KATADASAR + "='" + cek_kata + "'";
+    private String QUERY_CHECK_KATADASAR_EXIST = "SELECT * FROM " + KATADASAR_TABLE_NAME + " WHERE " + KATADASAR_COLUMN_KATADASAR + " = '" + katadasar + "'";
+
+    private String QUERY_CHECK_DATA_UTAMA_EXIST = "SELECT * FROM " + DATA_UTAMA_TABLE_NAME + " WHERE " + DATA_COLUMN_IDKONTEN + "=" + id + "";
+    private String QUERY_CHECK_DATA_STOPLIST_EXIST = "SELECT * FROM " + DATA_STOPLIST_TABLE_NAME + " WHERE " + DATA_COLUMN_IDKONTEN + "=" + id + "";
+    private String QUERY_CHECK_DATA_STEMMING_EXIST = "SELECT * FROM " + DATA_STEMMING_TABLE_NAME + " WHERE " + DATA_COLUMN_IDKONTEN + "=" + id + "";
+*/
+    private String QUERY_GET_ALL_DATA_UTAMA = "select * from " + DATA_UTAMA_TABLE_NAME;
+    private String QUERY_GET_ALL_DATA_STOPLIST = "SELECT * FROM " + DATA_STOPLIST_TABLE_NAME;
+    private String QUERY_GET_ALL_DATA_STEMMING = "SELECT * FROM " + DATA_STEMMING_TABLE_NAME;
+
+//    private String QUERY_GET_SEARCH_DATA = "select * from "+DATA_UTAMA_TABLE_NAME+" where konten LIKE '%" + konten + "%'";
+
+    public DBHelper(Context context) {
+        super(context, DATABASE_NAME, null, 1);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL(
+                "create table if not exists " + KATADASAR_TABLE_NAME + " (" + KATADASAR_COLUMN_ID + " integer primary key, " + KATADASAR_COLUMN_KATADASAR + " text)"
+        );
+        db.execSQL(
+                "create table if not exists " + DATA_UTAMA_TABLE_NAME + " (" + DATA_COLUMN_ID + " integer primary key," + DATA_COLUMN_IDKONTEN + " integer, " + DATA_COLUMN_KONTEN + " text, " + DATA_COLUMN_JUDUL + " text)"
+        );
+        db.execSQL(
+                "create table if not exists " + DATA_STOPLIST_TABLE_NAME + " (" + DATA_COLUMN_ID + " integer primary key," + DATA_COLUMN_IDKONTEN + " integer, " + DATA_COLUMN_KONTEN + " text, " + DATA_COLUMN_JUDUL + " text, " + DATA_COLUMN_REMOVEDWORD + " text)"
+        );
+        db.execSQL(
+                "create table if not exists " + DATA_STEMMING_TABLE_NAME + " (" + DATA_COLUMN_ID + " integer primary key," + DATA_COLUMN_IDKONTEN + " integer, " + DATA_COLUMN_KONTEN + " text, " + DATA_COLUMN_JUDUL + " text)"
+        );
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + DATA_UTAMA_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + DATA_STOPLIST_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + DATA_STEMMING_TABLE_NAME);
+        onCreate(db);
+    }
+
+
+//  CHECK DATA
+
+
+    //cek apakah tabel katadasar sudah terisi atau belum
+    public boolean isTBKataDasarEmpty() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery(QUERY_CHECK_TB_KATADASAR_SIZE, null);
+            res.moveToFirst();
+            int count = res.getInt(0);
+            if (count == 28524) {
+                res.close();
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+
+    //cek apakah tabel katadasar sudah terisi atau belum
+    public boolean isTBDataUtamaEmpty() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery(QUERY_CHECK_TB_DATAUTAMA_SIZE, null);
+            res.moveToFirst();
+            int count = res.getInt(0);
+            if (count > 0) {
+                res.close();
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+
+    //cek apakah tabel katadasar sudah terisi atau belum
+    public boolean isTBDataStoplistEmpty() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery(QUERY_CHECK_TB_DATASTOPLIST_SIZE, null);
+            res.moveToFirst();
+            int count = res.getInt(0);
+            if (count > 0) {
+                res.close();
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+
+    public boolean isTBDataStemmingEmpty() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery(QUERY_CHECK_TB_DATASTEMMING_SIZE, null);
+            res.moveToFirst();
+            int count = res.getInt(0);
+            if (count > 0) {
+                res.close();
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+
+    public boolean isDataUtamaExist(String id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res = null;
+        try {
+            //this.id = id;
+            res = db.rawQuery("SELECT * FROM " + DATA_UTAMA_TABLE_NAME + " WHERE " + DATA_COLUMN_IDKONTEN + "=" + id + "", null);
+            if (res.moveToFirst()) {
+                res.close();
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return false;
+    }
+
+    public boolean isDataStoplistExist(String id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res = null;
+        try {
+            //this.id = id;
+            res = db.rawQuery("SELECT * FROM " + DATA_STOPLIST_TABLE_NAME + " WHERE " + DATA_COLUMN_IDKONTEN + "=" + id + "", null);
+            if (res.moveToFirst()) {
+                res.close();
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return false;
+    }
+
+    public boolean isDataStemmingExist(String id) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res = null;
+        try {
+            //this.id = id;
+            res = db.rawQuery("SELECT * FROM " + DATA_STEMMING_TABLE_NAME + " WHERE " + DATA_COLUMN_IDKONTEN + "=" + id + "", null);
+            if (res.moveToFirst()) {
+                res.close();
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return false;
+    }
+
+    public boolean isKataDasarExist(String katadasar) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res = null;
+        try {
+            //this.katadasar = katadasar;
+            res = db.rawQuery("SELECT * FROM " + KATADASAR_TABLE_NAME + " WHERE " + KATADASAR_COLUMN_KATADASAR + " = '" + katadasar + "'", null);
+            if (res.moveToFirst()) {
+                res.close();
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return false;
+    }
+
+    //cek apakah kata sudah merupakan kata dasar / belum
+    public boolean isKataDasar(String cek_kata) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res = null;
+        try {
+            //this.cek_kata = cek_kata;
+            res = db.rawQuery("SELECT * FROM " + KATADASAR_TABLE_NAME + " WHERE " + KATADASAR_COLUMN_KATADASAR + "='" + cek_kata + "'", null);
+            res.moveToFirst();
+            int count = res.getCount();
+            if (count > 0) {
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            res.close();
+            db.close();
+        }
+        return false;
+    }
+
+
+//  GETTING DATA
+
+
+    public Cursor getDataSearch(String konten) {
+        //this.konten = konten;
+        SQLiteDatabase db = this.getReadableDatabase();
+        try {
+            Cursor res = db.rawQuery("SELECT * FROM " + DATA_STEMMING_TABLE_NAME + " WHERE " + DATA_COLUMN_KONTEN + " LIKE '%" + konten + "%'", null);
+            return res;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Cursor getAllDataUtama() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        try {
+            Cursor res = db.rawQuery(QUERY_GET_ALL_DATA_UTAMA, null);
+            return res;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Cursor getAllDataStoplist() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        try {
+            Cursor res = db.rawQuery(QUERY_GET_ALL_DATA_STOPLIST, null);
+            return res;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Cursor getAllDataStemming() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        try {
+            Cursor res = db.rawQuery(QUERY_GET_ALL_DATA_STEMMING, null);
+            return res;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+//  ADDING DATA
+
+
+    //masukkan kata dasar ke dalam table
+    public boolean addKataDasar(String katadasar) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = null;
+        try {
+            contentValues = new ContentValues();
+            contentValues.put(KATADASAR_COLUMN_KATADASAR, katadasar);
+            db.insert(KATADASAR_TABLE_NAME, null, contentValues);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+
+    //masukkan kata dasar ke dalam table
+    public boolean addDataUtama(String id, String konten, String title) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = null;
+        try {
+            contentValues = new ContentValues();
+            contentValues.put(DATA_COLUMN_IDKONTEN, id);
+            contentValues.put(DATA_COLUMN_KONTEN, konten);
+            contentValues.put(DATA_COLUMN_JUDUL, title);
+            db.insert(DATA_UTAMA_TABLE_NAME, null, contentValues);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+
+    //masukkan kata dasar ke dalam table
+    public boolean addDataStoplist(String id, String konten, String title, String removedword) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = null;
+        try {
+            contentValues = new ContentValues();
+            contentValues.put(DATA_COLUMN_IDKONTEN, id);
+            contentValues.put(DATA_COLUMN_KONTEN, konten);
+            contentValues.put(DATA_COLUMN_JUDUL, title);
+            contentValues.put(DATA_COLUMN_REMOVEDWORD, removedword);
+            db.insert(DATA_STOPLIST_TABLE_NAME, null, contentValues);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+
+    //masukkan kata dasar ke dalam table
+    public boolean addDataStemming(String id, String konten, String title) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = null;
+        try {
+            contentValues = new ContentValues();
+            contentValues.put(DATA_COLUMN_IDKONTEN, id);
+            contentValues.put(DATA_COLUMN_KONTEN, konten);
+            contentValues.put(DATA_COLUMN_JUDUL, title);
+            db.insert(DATA_STEMMING_TABLE_NAME, null, contentValues);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+}

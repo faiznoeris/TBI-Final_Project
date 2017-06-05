@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Temu Balik Informasi</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <string name="drawer1">Aplikasi ke - 1 (Hitung Kata)</string>
+    <string name="drawer2">Aplikasi ke - 2 (Stemming dan Stoplist #1)</string>
+    <string name="drawer3">Aplikasi ke - 3 (Stemming dan Stoplist #2)</string>
+</resources>
