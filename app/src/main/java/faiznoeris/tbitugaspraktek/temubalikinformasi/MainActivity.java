@@ -75,14 +75,6 @@ public class MainActivity extends AppCompatActivity
         // TODO check data_tocheck utama, jika data_tocheck utama kontennya berubah maka update data_tocheck
         // TODO berikan bobot saat pencarian (mungkin hitung keyword yang muncul dalam konten, paling banyak tampil paling atas
 
-
-        // TODO 1. GET ALL DATA FROM DB // LISTVIEW (LIST<MAP>)
-        // TODO 2. INSERT DAT DATA INTO LIST<MAP>
-        // TODO 3. GET LATEST DATA FROM WEB
-        // TODO 4. INSERT DAT DATA INTO LIST<MAP>
-        // TODO 5. LOOP LIST<MAP> OR SIZE
-        // TODO 6. CHECK IF THERE ANY DIFFERENCE BETWEEN THAT 2 DATA IN JUDUL AND KONTEN
-
     }
 
     public void setActionBarTitle(String title) {

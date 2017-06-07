@@ -21,10 +21,16 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import junit.framework.Assert;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 
 import java.security.Key;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -47,6 +53,9 @@ public class FragmentSearchData extends Fragment {
     DBHelper db;
 
     String id, konten, judul, Value;
+
+    int countKeyword = 0;
+    String[] splitKeyword;
 
     Map<String, String> map;
     List<Map<String, String>> data = new ArrayList<>();
@@ -88,15 +97,39 @@ public class FragmentSearchData extends Fragment {
 
                             String replaced_by_this = WordUtils.capitalize(Value);
 
+                            splitKeyword = konten.split(" ");
+
                             konten = konten.replaceAll("(?i)"+Value, "<b>" + replaced_by_this + "</b>");
                             konten = konten.replace("\n", "<p></p>");
+
+                            countKeyword=0;
+
+                            for(int i = 0; i < splitKeyword.length; i++){
+                                if(StringUtils.containsIgnoreCase(splitKeyword[i], Value)){
+                                    countKeyword++;
+                                    Log.d("SearchData", "Found keyword - " + splitKeyword[i]);
+                                }
+                            }
 
                             map.put("id", id);
                             map.put("content", konten);
                             map.put("title", judul);
+                            map.put("countkeyword", String.valueOf(countKeyword));
                             data.add(map);
                             rs.moveToNext();
                         }
+
+                        //sorting most countkeyword
+                        Collections.sort(data, new Comparator<Map<String, String>>() {
+                            @Override
+                            public int compare(Map<String, String> o1, Map<String, String> o2) {
+                                int val1 = Integer.parseInt(o1.get("countkeyword"));
+                                int val2 = Integer.parseInt(o2.get("countkeyword"));
+                                return val1 > val2 ? -1 : (val1 < val2) ? 1 : 0;
+                            }
+                        });
+
+
 
                         trHeader.setVisibility(View.VISIBLE);
                         listData.setVisibility(View.VISIBLE);
@@ -137,7 +170,8 @@ public class FragmentSearchData extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 HashMap<String,String> map =(HashMap<String,String>)listData.getItemAtPosition(position);
                 String id_click = map.get("title");
-                Toast.makeText(getContext(), id_click, Toast.LENGTH_SHORT).show();
+                String cKey = map.get("countkeyword");
+                Toast.makeText(getContext(), "Judul: " + id_click + " || Jumlah keyword muncul: " + cKey, Toast.LENGTH_SHORT).show();
             }
         });
 

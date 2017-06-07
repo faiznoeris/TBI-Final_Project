@@ -141,7 +141,7 @@ public class CheckData extends AsyncTask<Void, Void, List<Map<String, String>>> 
                         @Override
                         public void run() {
                             loadingBarHorizontal.setProgress(counter);
-                            tvInfo.setText("Current Progress = Getting new data");
+                            tvInfo.setText("Current Progress = Getting new data - " + counter + " / " + (size * 3));
                         }
                     });
                     map.put("id", id);
@@ -168,7 +168,7 @@ public class CheckData extends AsyncTask<Void, Void, List<Map<String, String>>> 
                         @Override
                         public void run() {
                             loadingBarHorizontal.setProgress(counter);
-                            tvInfo.setText("Current Progress = Getting old data");
+                            tvInfo.setText("Current Progress = Getting old data - " + counter + " / " + (size * 3));
                         }
                     });
                     map.put("id", id);
@@ -182,12 +182,8 @@ public class CheckData extends AsyncTask<Void, Void, List<Map<String, String>>> 
 
             Log.d(TAG_LOG_D, "Checking old data and new data");
 
-            // TODO FIX THIS SHIT
-
-
             //counter = 0;
             if (totalDataNew == size) {
-                Log.d(TAG_LOG_D, "Size sama");
                 for (Map<String, String> tempmap_1 : data_tocheck) {
                     counter++;
                     progressHandler.post(new Runnable() {
@@ -197,50 +193,28 @@ public class CheckData extends AsyncTask<Void, Void, List<Map<String, String>>> 
                             tvInfo.setText("Current Progress = Checking if theres any data to update - " + counter + " / " + (size * 3));
                         }
                     });
-                    for (Map.Entry<String, String> entry_1 : tempmap_1.entrySet()) {
-                        if (entry_1.getKey().equals("id")) {
-                            id_tocheck = entry_1.getValue();
-                        }
-                        for (Map<String, String> tempmap_2 : data_new) {
-                            for (Map.Entry<String, String> entry_2 : tempmap_2.entrySet()) {
-                                if (entry_2.getKey().equals("id")) {
-                                    id_new = entry_2.getValue();
+                    for (Map<String, String> tempmap_2 : data_new) {
+                        if(tempmap_1.get("id").equalsIgnoreCase(tempmap_2.get("id"))){
+
+                            if(tempmap_1.get("title").equalsIgnoreCase(tempmap_2.get("title"))){
+                                //
+                            }else{
+                                if (db.updateDataUtama(tempmap_1.get("id"), tempmap_2.get("title"), "")) {
+                                    Log.d(TAG_LOG_D, "Data updated (Title) - " + tempmap_1.get("id"));
+                                    //return null;
                                 }
-                                if ((entry_1.getKey().equals("content") && entry_2.getKey().equals("content")) && id_tocheck.equalsIgnoreCase(id_new) && id_new != "" && id_tocheck != "") {
-                                    if (entry_1.getValue().equalsIgnoreCase(entry_2.getValue())) {
-                                        Log.d(TAG_LOG_D, "SAMA " + id_new + "  - lama > " + id_tocheck);
-                                        if (db.updateDataUtama(id_new, "", entry_2.getValue())) {
-                                            Log.d(TAG_LOG_D, "Data updated - " + id_tocheck);
-                                            //return null;
-                                        }
-                                    }else{
-                                        if (db.updateDataUtama(id_new, "", entry_2.getValue())) {
-                                            Log.d(TAG_LOG_D, "Data updated - " + id_tocheck);
-                                            //return null;
-                                        }
-                                        /*Log.d(TAG_LOG_D, "BEDA " + id_new + "  - lama > " + id_tocheck);
-                                        Log.d(TAG_LOG_D, "BEDA " + entry_1.getValue() + "  - lama > " + entry_2.getValue());
-                                        if (db.updateDataUtama(idupdate, "", entry_2.getValue())) {
-                                            return null;
-                                        }*/
-                                    }
-                                } else if ((entry_1.getKey().equals("title") && entry_2.getKey().equals("title")) && id_tocheck.equalsIgnoreCase(id_new) && id_new != "" && id_tocheck != "") {
-                                    if (entry_1.getValue().equalsIgnoreCase(entry_2.getValue())) {
-                                        //Log.d(TAG_LOG_D, "SAMA " + id_new + "  - lama > " + id_tocheck);
-                                    }else{
-                                        if (db.updateDataUtama(id_new, entry_2.getValue(), "")) {
-                                            Log.d(TAG_LOG_D, "Data updated - " + id_tocheck);
-                                            //return null;
-                                        }
-                                        /*Log.d(TAG_LOG_D, "BEDA " + id_new + "  - lama > " + id_tocheck);
-                                        Log.d(TAG_LOG_D, "BEDA " + entry_1.getValue() + "  - lama > " + entry_2.getValue());
-                                        if (db.updateDataUtama(idupdate, "", entry_2.getValue())) {
-                                            return null;
-                                        }*/
-                                    }
+                            }
+
+                            if(tempmap_1.get("content").equalsIgnoreCase(tempmap_2.get("content"))){
+                                //
+                            }else{
+                                if (db.updateDataUtama(tempmap_1.get("id"), "", tempmap_2.get("content"))) {
+                                    Log.d(TAG_LOG_D, "Data updated (Content) - " + tempmap_1.get("id"));
+                                    //return null;
                                 }
                             }
                         }
+
                     }
                 }
             }else{
