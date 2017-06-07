@@ -3,8 +3,19 @@ package faiznoeris.tbitugaspraktek.temubalikinformasi;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Environment;
+import android.util.Log;
+import android.widget.Toast;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Created by Vellfire on 01/05/2017.
@@ -12,13 +23,16 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DBHelper extends SQLiteOpenHelper {
 
-    private String cek_kata, id, katadasar, konten;
+    //private String cek_kata, id, katadasar, konten;
+    public static final int KATADASAR_MAX = 28524;
+    private final static String DATABASE_PATH = "/data/data/faiznoeris.tbitugaspraktek.temubalikinformasi/databases/";
+    private final Context dbContext;
+    //context.getApplicationInfo().dataDir + "/databases/"
 
     private static final String DATABASE_NAME = "TBI.db";
     private static final String KATADASAR_TABLE_NAME = "tb_katadasar";
     private static final String KATADASAR_COLUMN_ID = "id";
     private static final String KATADASAR_COLUMN_KATADASAR = "katadasar";
-
 
     private static final String DATA_STOPLIST_TABLE_NAME = "tb_data_stoplist";
     private static final String DATA_STEMMING_TABLE_NAME = "tb_data_stemming";
@@ -30,11 +44,14 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String DATA_COLUMN_JUDUL = "judul";
     public static final String DATA_COLUMN_REMOVEDWORD = "removedword";
 
-
     private static final String QUERY_CHECK_TB_KATADASAR_SIZE = "SELECT count(*) FROM " + KATADASAR_TABLE_NAME;
     private static final String QUERY_CHECK_TB_DATAUTAMA_SIZE = "SELECT count(*) FROM " + DATA_UTAMA_TABLE_NAME;
     private static final String QUERY_CHECK_TB_DATASTOPLIST_SIZE = "SELECT count(*) FROM " + DATA_STOPLIST_TABLE_NAME;
     private static final String QUERY_CHECK_TB_DATASTEMMING_SIZE = "SELECT count(*) FROM " + DATA_STEMMING_TABLE_NAME;
+
+    private static final String QUERY_GET_ALL_DATA_UTAMA = "select * from " + DATA_UTAMA_TABLE_NAME;
+    private static final String QUERY_GET_ALL_DATA_STOPLIST = "SELECT * FROM " + DATA_STOPLIST_TABLE_NAME;
+    private static final String QUERY_GET_ALL_DATA_STEMMING = "SELECT * FROM " + DATA_STEMMING_TABLE_NAME;
 
 /*
     private String QUERY_CHECK_KATADASAR = "SELECT * FROM " + KATADASAR_TABLE_NAME + " WHERE " + KATADASAR_COLUMN_KATADASAR + "='" + cek_kata + "'";
@@ -44,18 +61,89 @@ public class DBHelper extends SQLiteOpenHelper {
     private String QUERY_CHECK_DATA_STOPLIST_EXIST = "SELECT * FROM " + DATA_STOPLIST_TABLE_NAME + " WHERE " + DATA_COLUMN_IDKONTEN + "=" + id + "";
     private String QUERY_CHECK_DATA_STEMMING_EXIST = "SELECT * FROM " + DATA_STEMMING_TABLE_NAME + " WHERE " + DATA_COLUMN_IDKONTEN + "=" + id + "";
 */
-    private String QUERY_GET_ALL_DATA_UTAMA = "select * from " + DATA_UTAMA_TABLE_NAME;
-    private String QUERY_GET_ALL_DATA_STOPLIST = "SELECT * FROM " + DATA_STOPLIST_TABLE_NAME;
-    private String QUERY_GET_ALL_DATA_STEMMING = "SELECT * FROM " + DATA_STEMMING_TABLE_NAME;
+
 
 //    private String QUERY_GET_SEARCH_DATA = "select * from "+DATA_UTAMA_TABLE_NAME+" where konten LIKE '%" + konten + "%'";
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, 1);
+        this.dbContext = context;
+        // checking database and open it if exists
+        if (checkDataBase(context)) {
+            openDataBase();
+        } else {
+            try {
+                this.getReadableDatabase();
+                copyDataBase();
+                this.close();
+                openDataBase();
+
+            } catch (IOException e) {
+                Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show();
+            }
+            Toast.makeText(context, "Initial database is created", Toast.LENGTH_LONG).show();
+        }
     }
+
+    private void copyDataBase() throws IOException{
+        InputStream myInput = dbContext.getAssets().open(DATABASE_NAME);
+        String outFileName = DATABASE_PATH + DATABASE_NAME;
+        OutputStream myOutput = new FileOutputStream(outFileName);
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer))>0){
+            myOutput.write(buffer, 0, length);
+        }
+
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
+
+    public void openDataBase() throws SQLException {
+        String dbPath = DATABASE_PATH + DATABASE_NAME;
+        SQLiteDatabase db = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READWRITE);
+    }
+
+    private boolean checkDataBase(Context context) {
+        SQLiteDatabase checkDB = null;
+        boolean exist = false;
+        try {
+            String dbPath = DATABASE_PATH + DATABASE_NAME;
+            File file = context.getDatabasePath(DATABASE_NAME);
+            //file.setWritable(true);
+            //checkDB = SQLiteDatabase.openDatabase(file.getAbsolutePath(), null,
+            //        SQLiteDatabase.OPEN_READONLY);
+            return file.exists();
+        } catch (SQLiteException e) {
+            e.printStackTrace();
+        }
+
+        /*if (checkDB != null) {
+            exist = true;
+            checkDB.close();
+        }*/
+        return exist;
+    }
+
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        /*if (checkDataBase()) {
+            openDataBase();
+        } else
+        {
+            try {
+                this.getReadableDatabase();
+                copyDataBase();
+                this.close();
+                openDataBase();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }*/
         db.execSQL(
                 "create table if not exists " + KATADASAR_TABLE_NAME + " (" + KATADASAR_COLUMN_ID + " integer primary key, " + KATADASAR_COLUMN_KATADASAR + " text)"
         );
@@ -90,7 +178,7 @@ public class DBHelper extends SQLiteOpenHelper {
             res = db.rawQuery(QUERY_CHECK_TB_KATADASAR_SIZE, null);
             res.moveToFirst();
             int count = res.getInt(0);
-            if (count == 28524) {
+            if (count == KATADASAR_MAX) {
                 res.close();
                 return false;
             }
@@ -306,6 +394,22 @@ public class DBHelper extends SQLiteOpenHelper {
         return null;
     }
 
+    public int getSizeDataUtama(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery(QUERY_CHECK_TB_DATAUTAMA_SIZE, null);
+            res.moveToFirst();
+            int count = res.getCount();
+            res.close();
+            return count;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return 0;
+    }
 
 //  ADDING DATA
 
@@ -379,5 +483,43 @@ public class DBHelper extends SQLiteOpenHelper {
             db.close();
         }
         return true;
+    }
+
+
+    //  ADDING DATA
+
+    public boolean updateDataUtama(String idkonten, String judul, String konten){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        try {
+            if(judul == "") {
+                contentValues.put(DATA_COLUMN_KONTEN, konten);
+                db.update(DATA_UTAMA_TABLE_NAME, contentValues, DATA_COLUMN_IDKONTEN + " = " + idkonten, null);
+            }else{
+                contentValues.put(DATA_COLUMN_JUDUL, judul);
+                db.update(DATA_UTAMA_TABLE_NAME, contentValues, DATA_COLUMN_IDKONTEN + " = " + idkonten, null);
+            }
+            /*res = db.rawQuery("UPDATE " + DATA_UTAMA_TABLE_NAME
+                        + " SET " + DATA_COLUMN_JUDUL + " = '" + judul + "' , " + DATA_COLUMN_KONTEN + " = '" + konten + "'"
+                        + " WHERE " + DATA_COLUMN_IDKONTEN + " = " + idkonten, null);
+            */
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return false;
+    }
+
+    //  REWMOVE DATA
+
+    public int delDataStoplist(String idkonten){
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete(DATA_STOPLIST_TABLE_NAME, DATA_COLUMN_IDKONTEN + " = " + idkonten, null);
+    }
+
+    public int delDataStemming(String idkonten){
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete(DATA_STEMMING_TABLE_NAME, DATA_COLUMN_IDKONTEN + " = " + idkonten, null);
     }
 }

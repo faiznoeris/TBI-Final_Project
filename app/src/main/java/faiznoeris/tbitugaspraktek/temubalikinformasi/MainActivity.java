@@ -1,10 +1,5 @@
 package faiznoeris.tbitugaspraktek.temubalikinformasi;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.annotation.TargetApi;
-import android.content.res.AssetManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.design.widget.NavigationView;
@@ -19,29 +14,18 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-
 import fragment.FragmentHitungKata;
 import fragment.FragmentStemmingStoplist_1;
 import fragment.FragmentStemmingStoplist_2;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-
-    private final String TAG_LOG_D = "Main_InsertTBKD";
-    String str;
-
     DBHelper db;
-    AssetManager am;
-    InputStream is = null;
-    BufferedReader bufferedReader;
 
-    ProgressBar loadingView;
-    TextView info;
-    View tampilanView;
-
-    int counter = 0; //counter penambahan kata dasar ke table
+    ProgressBar loadingBarHorizontal;
+    TextView tvInfo;
+    MenuItem menuGetData, menuSearchData;
+    View mainView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,35 +45,43 @@ public class MainActivity extends AppCompatActivity
 
         //-------------------------------------------------------------------------------
 
-        loadingView = (ProgressBar) findViewById(R.id.progress);
-        tampilanView = findViewById(R.id.mainFrame);
-        info = (TextView) findViewById(R.id.progressinfo);
+        mainView = findViewById(R.id.mainFrame);
+        loadingBarHorizontal = (ProgressBar) findViewById(R.id.progress);
+        tvInfo = (TextView) findViewById(R.id.progressinfo);
 
 
-        db = new DBHelper(this);
 
         //Toast.makeText(this, String.valueOf(obj.isTableExists("tbkatadasar")) + " " + String.valueOf(obj.isTBKataDasarEmpty()), Toast.LENGTH_SHORT).show();
         //!(obj.isTableExists(obj.KATADASAR_TABLE_NAME)) ||
-        //check apakah tabel masih kosong, jika iya isi data
-
+        //check apakah tabel masih kosong, jika iya isi data_tocheck
+        db = new DBHelper(this);
         //showProgress(true);
+
         navigationView.setCheckedItem(R.id.nav_drawer1);
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         ft.replace(R.id.mainFrame, new FragmentHitungKata());
         ft.commit();
 
-        if(db.isTBKataDasarEmpty()) {
-            InsertData insertData = new InsertData(this, null, loadingView, tampilanView, info, null, null);
-            insertData.execute("insert_katadasar");
+        /*if(db.isTBKataDasarEmpty()) {
+            db = new DBHelper(this);
+            //InsertData insertData = new InsertData(this, loadingBarHorizontal, mainView, tvInfo, null, null);
+            //insertData.execute();
         }else {
-            CheckData checkData = new CheckData();
+            CheckData checkData = new CheckData(this, null, loadingBarHorizontal, mainView, tvInfo, null, null);
             checkData.execute();
-        }
+        }*/
 
-        // TODO check data utama, jika data utama kontennya berubah maka update data
+        // TODO check data_tocheck utama, jika data_tocheck utama kontennya berubah maka update data_tocheck
         // TODO berikan bobot saat pencarian (mungkin hitung keyword yang muncul dalam konten, paling banyak tampil paling atas
 
+
+        // TODO 1. GET ALL DATA FROM DB // LISTVIEW (LIST<MAP>)
+        // TODO 2. INSERT DAT DATA INTO LIST<MAP>
+        // TODO 3. GET LATEST DATA FROM WEB
+        // TODO 4. INSERT DAT DATA INTO LIST<MAP>
+        // TODO 5. LOOP LIST<MAP> OR SIZE
+        // TODO 6. CHECK IF THERE ANY DIFFERENCE BETWEEN THAT 2 DATA IN JUDUL AND KONTEN
 
     }
 
@@ -101,25 +93,15 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
-        MenuItem item = menu.findItem(R.id.action_getdata);
-        MenuItem item2 = menu.findItem(R.id.action_searchdata);
-        item.setVisible(false);
-        item2.setVisible(false);
+        menuGetData = menu.findItem(R.id.action_getdata);
+        menuSearchData = menu.findItem(R.id.action_searchdata);
+        menuGetData.setVisible(false);
+        menuSearchData.setVisible(false);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_getdata) {
-            //
-        }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -156,40 +138,5 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
-    }
-
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-    private void showProgress(final boolean show) {
-        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
-        // for very easy animations. If available, use these APIs to fade-in
-        // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
-
-            tampilanView.setVisibility(show ? View.GONE : View.VISIBLE);
-            tampilanView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    tampilanView.setVisibility(show ? View.GONE : View.VISIBLE);
-                }
-            });
-
-            loadingView.setMax(28524);
-            loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
-            loadingView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
-                }
-            });
-            loadingView.setProgress(10000);
-        } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
-            tampilanView.setVisibility(show ? View.GONE : View.VISIBLE);
-        }
     }
 }

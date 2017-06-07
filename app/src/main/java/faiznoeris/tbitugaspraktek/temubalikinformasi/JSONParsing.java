@@ -42,6 +42,7 @@ public class JSONParsing extends AsyncTask<Void, String, List<Map<String, String
     String line = "",finalJson, content,id;
 
     public static int totalData = 0;
+    public static int totalPages = 0;
 
     FragmentStemmingStoplist_2 fragmentStoplistStemming_2;
     Context context;
@@ -71,45 +72,71 @@ public class JSONParsing extends AsyncTask<Void, String, List<Map<String, String
     protected List<Map<String, String>> doInBackground(Void... params) {
         try{
             db = new DBHelper(context);
-            for(int i = 1; i <= 10; i++) {
+            link = new URL(WEBSITE_ADDRESS);
+            conn = (HttpURLConnection) link.openConnection();
+            try {
+                conn.connect();
+            }catch (Exception e){
+                e.printStackTrace();
+                return null;
+            }
+            inputStream = conn.getInputStream();
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+            stringBuffer = new StringBuffer();
+
+            //masukkan json kedalam stringbuffer
+            while ((line = bufferedReader.readLine()) != null) {
+                stringBuffer.append(line);
+            }
+            bufferedReader.close();
+
+            //finalJson = stringBuffer.toString();
+            parentObject = new JSONObject(stringBuffer.toString());
+
+            totalPages = Integer.parseInt(parentObject.getString("pages"));
+            totalData = Integer.parseInt(parentObject.getString("count_total"));
+            for(int i = 1; i <= totalPages; i++) {
                 if (i > 1){
                     WEBSITE_ADDRESS = "http://www.hirupmotekar.com/page/"+i+"/?json=1";
+                    //membuka koneksi
+                    link = new URL(WEBSITE_ADDRESS);
+                    conn = (HttpURLConnection) link.openConnection();
+                    try {
+                        conn.connect();
+                    }catch (UnknownHostException e){
+                        e.printStackTrace();
+                        return null;
+                    }catch (Exception e){
+                        e.printStackTrace();
+                        return null;
+                    }
+
+                    inputStream = conn.getInputStream();
+                    bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                    stringBuffer = new StringBuffer();
+
+                    //masukkan json kedalam stringbuffer
+                    while ((line = bufferedReader.readLine()) != null) {
+                        stringBuffer.append(line);
+                    }
+                    bufferedReader.close();
+
+                    finalJson = stringBuffer.toString();
+
+                    //rubah string json kedalam bentuk jsonobject
+                    parentObject = new JSONObject(finalJson);
+
                 }
-                //membuka koneksi
-                link = new URL(WEBSITE_ADDRESS);
-                conn = (HttpURLConnection) link.openConnection();
-                try {
-                    conn.connect();
-                }catch (UnknownHostException e){
-                    e.printStackTrace();
-                    return null;
-                }catch (Exception e){
-                    e.printStackTrace();
-                    return null;
-                }
 
-                inputStream = conn.getInputStream();
-                bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                stringBuffer = new StringBuffer();
-
-                //masukkan json kedalam stringbuffer
-                while ((line = bufferedReader.readLine()) != null) {
-                    stringBuffer.append(line);
-                }
-
-                finalJson = stringBuffer.toString();
-
-                //rubah string json kedalam bentuk jsonobject
-                parentObject = new JSONObject(finalJson);
                 parentArray = parentObject.getJSONArray("posts");
 
-                //pengambilan data
+                //pengambilan data_tocheck
                 for (int j = 0; j < parentArray.length(); j++) {
                     map = new HashMap<>(2);
                     e = parentArray.getJSONObject(j);
                     id = e.getString("id");
                     content = Html.fromHtml(e.getString("content")).toString(); //remove html entities
-                    totalData++;
+                    //totalData++;
                     map.put("id", id);
                     map.put("content", content);
                     map.put("title", Html.fromHtml(e.getString("title")).toString());
@@ -151,7 +178,7 @@ public class JSONParsing extends AsyncTask<Void, String, List<Map<String, String
     protected void onPostExecute(List<Map<String, String>> s) {
         showProgress(true);
         if (s != null) {
-            Log.d(TAG_LOG_D, "Done - Total data = " + totalData);
+            Log.d(TAG_LOG_D, "Done - Total data_tocheck = " + totalData);
 
             SimpleAdapter adapter = new SimpleAdapter(context, s,
                     R.layout.row,
@@ -163,7 +190,7 @@ public class JSONParsing extends AsyncTask<Void, String, List<Map<String, String
             fragmentStoplistStemming_2.setAdapter(adapter, "utama");
         }else{
             showProgress(false);
-            Toast.makeText(context, "Terjadi error saat pengambilan data!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Terjadi error saat pengambilan data_tocheck!", Toast.LENGTH_SHORT).show();
 
         }
     }

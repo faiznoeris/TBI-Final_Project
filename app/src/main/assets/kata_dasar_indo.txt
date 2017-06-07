@@ -9653,7 +9653,7 @@ infleksif
 infloresens
 influensa
 influenza
-info
+tvInfo
 informal
 informan
 informasi

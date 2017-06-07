@@ -20,7 +20,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -29,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import faiznoeris.tbitugaspraktek.temubalikinformasi.CheckData;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.JSONParsing;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.MainActivity;
@@ -48,6 +51,8 @@ public class FragmentStemmingStoplist_2 extends Fragment {
     ListView lvUtama, lvStoplist, lvStemming;
     View loadingView;
     View tampilanView;
+    ProgressBar loadingBarHorizontal;
+    TextView tvInfo;
 
     DBHelper db;
 
@@ -70,7 +75,9 @@ public class FragmentStemmingStoplist_2 extends Fragment {
         lvStoplist = (ListView) rootView.findViewById(R.id.listViewStoplist);
         lvStemming = (ListView) rootView.findViewById(R.id.listViewStemming);
         tampilanView = rootView.findViewById(R.id.tampilan);
-        loadingView = rootView.findViewById(R.id.progress);
+        loadingView = rootView.findViewById(R.id.progressCircle);
+        loadingBarHorizontal = (ProgressBar) rootView.findViewById(R.id.progress);
+        tvInfo = (TextView) rootView.findViewById(R.id.progressinfo);
 
         lvUtama.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -110,6 +117,8 @@ public class FragmentStemmingStoplist_2 extends Fragment {
             JSONParsing jsonParsing = new JSONParsing(this, getContext(), tampilanView, loadingView);
             jsonParsing.execute();
         } else if (!(db.isTBDataUtamaEmpty())) {
+            CheckData checkData = new CheckData(getContext(), loadingBarHorizontal, tampilanView, tvInfo, this);
+            checkData.execute();
             Cursor rs = db.getAllDataUtama();
             if (rs.moveToFirst()) {
                 while (rs.isAfterLast() == false) {
