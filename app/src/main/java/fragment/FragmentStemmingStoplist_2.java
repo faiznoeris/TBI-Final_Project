@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import faiznoeris.tbitugaspraktek.temubalikinformasi.CheckData;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.JSONParsing;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.MainActivity;
@@ -127,11 +128,11 @@ public class FragmentStemmingStoplist_2 extends Fragment {
             //showProgress(true);
             getPagesAndTotalData getPagesAndTotalData = new getPagesAndTotalData();
             getPagesAndTotalData.execute();
-            //Log.d("ASU", "PAGES , DATA = " + totalData + " " + totalPages);
+            //Log.d("ASU", "PAGES , DATA = " + totalDataNew + " " + totalPages);
 
         } else if (!(db.isTBDataUtamaEmpty())) {
-            //CheckData checkData = new CheckData(getContext(), loadingBarHorizontal, mainView, tvInfo, this);
-            //checkData.execute();
+            CheckData checkData = new CheckData(getContext(), loadingBarHorizontal, mainView, tvInfo, this);
+            checkData.execute();
             Cursor rs = db.getAllDataUtama();
             if (rs.moveToFirst()) {
                 while (rs.isAfterLast() == false) {
@@ -406,7 +407,7 @@ public class FragmentStemmingStoplist_2 extends Fragment {
 
 
             mainView.setVisibility(View.GONE);
-            //loadingBarHorizontal.setMax(totalData);
+            //loadingBarHorizontal.setMax(totalDataNew);
             loadingBarHorizontal.setVisibility(View.VISIBLE);
             tvInfo.setVisibility(View.VISIBLE);
 

@@ -160,7 +160,7 @@ public class JSONParsing extends AsyncTask<Void, String, List<Map<String, String
                     e = parentArray.getJSONObject(j);
                     id = e.getString("id");
                     content = Html.fromHtml(e.getString("content")).toString(); //remove html entities
-                    //totalData++;
+                    //totalDataNew++;
                     map.put("id", id);
                     map.put("content", content);
                     map.put("title", Html.fromHtml(e.getString("title")).toString());

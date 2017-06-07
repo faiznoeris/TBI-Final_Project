@@ -44,10 +44,10 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String DATA_COLUMN_JUDUL = "judul";
     public static final String DATA_COLUMN_REMOVEDWORD = "removedword";
 
-    private static final String QUERY_CHECK_TB_KATADASAR_SIZE = "SELECT count(*) FROM " + KATADASAR_TABLE_NAME;
-    private static final String QUERY_CHECK_TB_DATAUTAMA_SIZE = "SELECT count(*) FROM " + DATA_UTAMA_TABLE_NAME;
-    private static final String QUERY_CHECK_TB_DATASTOPLIST_SIZE = "SELECT count(*) FROM " + DATA_STOPLIST_TABLE_NAME;
-    private static final String QUERY_CHECK_TB_DATASTEMMING_SIZE = "SELECT count(*) FROM " + DATA_STEMMING_TABLE_NAME;
+    private static final String QUERY_CHECK_TB_KATADASAR_SIZE = "SELECT COUNT(*) FROM " + KATADASAR_TABLE_NAME;
+    private static final String QUERY_CHECK_TB_DATAUTAMA_SIZE = "SELECT COUNT(*) FROM " + DATA_UTAMA_TABLE_NAME;
+    private static final String QUERY_CHECK_TB_DATASTOPLIST_SIZE = "SELECT COUNT(*) FROM " + DATA_STOPLIST_TABLE_NAME;
+    private static final String QUERY_CHECK_TB_DATASTEMMING_SIZE = "SELECT COUNT(*) FROM " + DATA_STEMMING_TABLE_NAME;
 
     private static final String QUERY_GET_ALL_DATA_UTAMA = "select * from " + DATA_UTAMA_TABLE_NAME;
     private static final String QUERY_GET_ALL_DATA_STOPLIST = "SELECT * FROM " + DATA_STOPLIST_TABLE_NAME;
@@ -398,11 +398,9 @@ public class DBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor res = null;
         try {
-            res = db.rawQuery(QUERY_CHECK_TB_DATAUTAMA_SIZE, null);
+            res = db.rawQuery(QUERY_GET_ALL_DATA_UTAMA, null);
             res.moveToFirst();
-            int count = res.getCount();
-            res.close();
-            return count;
+            return res.getCount();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -494,10 +492,12 @@ public class DBHelper extends SQLiteOpenHelper {
         try {
             if(judul == "") {
                 contentValues.put(DATA_COLUMN_KONTEN, konten);
-                db.update(DATA_UTAMA_TABLE_NAME, contentValues, DATA_COLUMN_IDKONTEN + " = " + idkonten, null);
+                db.update(DATA_UTAMA_TABLE_NAME, contentValues, DATA_COLUMN_IDKONTEN + " = " + Integer.parseInt(idkonten), null);
+                return true;
             }else{
                 contentValues.put(DATA_COLUMN_JUDUL, judul);
-                db.update(DATA_UTAMA_TABLE_NAME, contentValues, DATA_COLUMN_IDKONTEN + " = " + idkonten, null);
+                db.update(DATA_UTAMA_TABLE_NAME, contentValues, DATA_COLUMN_IDKONTEN + " = " + Integer.parseInt(idkonten), null);
+                return true;
             }
             /*res = db.rawQuery("UPDATE " + DATA_UTAMA_TABLE_NAME
                         + " SET " + DATA_COLUMN_JUDUL + " = '" + judul + "' , " + DATA_COLUMN_KONTEN + " = '" + konten + "'"
@@ -506,7 +506,7 @@ public class DBHelper extends SQLiteOpenHelper {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            db.close();
+            //db.close();
         }
         return false;
     }
