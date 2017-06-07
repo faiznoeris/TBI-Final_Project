@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.DialogInterface;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -25,13 +26,20 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import faiznoeris.tbitugaspraktek.temubalikinformasi.CheckData;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.JSONParsing;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.MainActivity;
@@ -50,9 +58,12 @@ public class FragmentStemmingStoplist_2 extends Fragment {
 
     ListView lvUtama, lvStoplist, lvStemming;
     View loadingView;
-    View tampilanView;
+    View mainView;
     ProgressBar loadingBarHorizontal;
     TextView tvInfo;
+
+    public static int totalData = 0;
+    public static int totalPages = 0;
 
     DBHelper db;
 
@@ -74,7 +85,7 @@ public class FragmentStemmingStoplist_2 extends Fragment {
         lvUtama = (ListView) rootView.findViewById(R.id.listView);
         lvStoplist = (ListView) rootView.findViewById(R.id.listViewStoplist);
         lvStemming = (ListView) rootView.findViewById(R.id.listViewStemming);
-        tampilanView = rootView.findViewById(R.id.tampilan);
+        mainView = rootView.findViewById(R.id.tampilan);
         loadingView = rootView.findViewById(R.id.progressCircle);
         loadingBarHorizontal = (ProgressBar) rootView.findViewById(R.id.progress);
         tvInfo = (TextView) rootView.findViewById(R.id.progressinfo);
@@ -113,12 +124,14 @@ public class FragmentStemmingStoplist_2 extends Fragment {
 
         db = new DBHelper(getContext());
         if (db.isTBDataUtamaEmpty()) {
-            showProgress(true);
-            JSONParsing jsonParsing = new JSONParsing(this, getContext(), tampilanView, loadingView);
-            jsonParsing.execute();
+            //showProgress(true);
+            getPagesAndTotalData getPagesAndTotalData = new getPagesAndTotalData();
+            getPagesAndTotalData.execute();
+            //Log.d("ASU", "PAGES , DATA = " + totalData + " " + totalPages);
+
         } else if (!(db.isTBDataUtamaEmpty())) {
-            CheckData checkData = new CheckData(getContext(), loadingBarHorizontal, tampilanView, tvInfo, this);
-            checkData.execute();
+            //CheckData checkData = new CheckData(getContext(), loadingBarHorizontal, mainView, tvInfo, this);
+            //checkData.execute();
             Cursor rs = db.getAllDataUtama();
             if (rs.moveToFirst()) {
                 while (rs.isAfterLast() == false) {
@@ -275,7 +288,7 @@ public class FragmentStemmingStoplist_2 extends Fragment {
                         if (counter == 0) {
                             if (db.isTBDataStoplistEmpty()) {
                                 showProgress(true);
-                                Stoplist stoplist = new Stoplist(data, getContext(), FragmentStemmingStoplist_2.this, tampilanView, loadingView);
+                                Stoplist stoplist = new Stoplist(data, getContext(), FragmentStemmingStoplist_2.this, mainView, loadingView);
                                 stoplist.execute();
                                 counter++;
                             }
@@ -285,7 +298,7 @@ public class FragmentStemmingStoplist_2 extends Fragment {
                         }/* else if (counter == 1) {
                             try {
                                 showProgress(true);
-                                Stemming stemming = new Stemming(data, getContext(), FragmentStemmingStoplist_2.this, tampilanView, loadingView);
+                                Stemming stemming = new Stemming(data, getContext(), FragmentStemmingStoplist_2.this, mainView, loadingView);
                                 stemming.execute();
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -326,7 +339,7 @@ public class FragmentStemmingStoplist_2 extends Fragment {
                                 map.put("title", title);
 
                                 data_stemming.add(map);
-                                Stemming stemming = new Stemming(data_stemming, getContext(), FragmentStemmingStoplist_2.this, tampilanView, loadingView);
+                                Stemming stemming = new Stemming(data_stemming, getContext(), FragmentStemmingStoplist_2.this, mainView, loadingView);
                                 stemming.execute();
                                 counter++;
                             }else{
@@ -352,12 +365,12 @@ public class FragmentStemmingStoplist_2 extends Fragment {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
             int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-            tampilanView.setVisibility(show ? View.GONE : View.VISIBLE);
-            tampilanView.animate().setDuration(shortAnimTime).alpha(
+            mainView.setVisibility(show ? View.GONE : View.VISIBLE);
+            mainView.animate().setDuration(shortAnimTime).alpha(
                     show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    tampilanView.setVisibility(show ? View.GONE : View.VISIBLE);
+                    mainView.setVisibility(show ? View.GONE : View.VISIBLE);
                 }
             });
 
@@ -373,8 +386,77 @@ public class FragmentStemmingStoplist_2 extends Fragment {
             // The ViewPropertyAnimator APIs are not available, so simply show
             // and hide the relevant UI components.
             loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
-            tampilanView.setVisibility(show ? View.GONE : View.VISIBLE);
+            mainView.setVisibility(show ? View.GONE : View.VISIBLE);
         }
     }
 
+    public class getPagesAndTotalData extends AsyncTask<Void, Void, JSONObject> {
+        URL link;
+        DBHelper db;
+        HttpURLConnection conn;
+        InputStream inputStream;
+        BufferedReader bufferedReader;
+        StringBuffer stringBuffer;
+        JSONObject parentObject, e;
+        String WEBSITE_ADDRESS = "http://www.hirupmotekar.com/?json=1";
+        String line = "";
+
+        @Override
+        protected void onPreExecute() {
+
+
+            mainView.setVisibility(View.GONE);
+            //loadingBarHorizontal.setMax(totalData);
+            loadingBarHorizontal.setVisibility(View.VISIBLE);
+            tvInfo.setVisibility(View.VISIBLE);
+
+            //startTime = System.currentTimeMillis();
+        }
+
+
+        @Override
+        protected JSONObject doInBackground(Void... params) {
+
+            db = new DBHelper(getContext());
+
+            try {
+                link = new URL(WEBSITE_ADDRESS);
+                conn = (HttpURLConnection) link.openConnection();
+                conn.connect();
+
+                inputStream = conn.getInputStream();
+                bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                stringBuffer = new StringBuffer();
+
+                //masukkan json kedalam stringbuffer
+                while ((line = bufferedReader.readLine()) != null) {
+                    stringBuffer.append(line);
+                }
+                bufferedReader.close();
+
+                //finalJson = stringBuffer.toString();
+                parentObject = new JSONObject(stringBuffer.toString());
+
+                Log.d("ASU", "PAGES " + parentObject.getString("pages"));
+            } catch (Exception er) {
+                er.printStackTrace();
+            }
+            return parentObject;
+        }
+
+
+        @Override
+        protected void onPostExecute(JSONObject res) {
+            try {
+                FragmentStemmingStoplist_2.totalPages = Integer.parseInt(res.getString("pages"));
+                FragmentStemmingStoplist_2.totalData = Integer.parseInt(res.getString("count_total"));
+                Log.d("ASU", "PAGES post execute" + totalData + " , " + totalPages);
+                JSONParsing jsonParsing = new JSONParsing(FragmentStemmingStoplist_2.this, getContext(), loadingBarHorizontal, mainView, tvInfo, totalPages, totalData);
+                jsonParsing.execute();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
+    }
 }
