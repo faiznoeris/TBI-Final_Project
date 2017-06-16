@@ -10,7 +10,9 @@ import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -23,7 +25,7 @@ import java.util.Map;
 
 import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.R;
-import fragment.FragmentStemmingStoplist_2;
+import fragment.FragmentShowData;
 
 /**
  * Created by Vellfire on 20/04/2017.
@@ -34,13 +36,16 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
 
     String belakang_1, belakang_2, belakang_3, depan_2, depan_3, depan_4, dasar, lowered;
     String[] word;
+    int counterLoadingBar = 0;
 
-    FragmentStemmingStoplist_2 fragmentStoplistStemming_2;
+    FragmentShowData fragmentShowData;
     DBHelper db;
     Context context;
 
-    View loadingView;
-    View tampilanView;
+    ProgressBar loadingBar;
+    View mainView;
+    TextView tvInfo;
+
 
     Map<String, String> map;
     List<Map<String, String>> data = new ArrayList<>();
@@ -57,23 +62,19 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
     String str_id,str_content,str_title;
     private Handler progressHandler = new Handler();
 
-    public Stemming(List<Map<String, String>> data, Context context, FragmentStemmingStoplist_2 fragmentStoplistStemming_2, View loadingView, View tampilanView) throws IOException {
-        this.fragmentStoplistStemming_2 = fragmentStoplistStemming_2;
+    public Stemming(List<Map<String, String>> data, Context context, FragmentShowData fragmentShowData, ProgressBar loadingBar, View mainView, TextView tvInfo) throws IOException {
+        this.fragmentShowData = fragmentShowData;
         this.context = context;
         this.data = data;
-        this.loadingView = loadingView;
-        this.tampilanView = tampilanView;
+        this.tvInfo = tvInfo;
+        this.loadingBar = loadingBar;
+        this.mainView = mainView;
     }
 
     @Override
     protected void onPreExecute() {
-        startTime = System.currentTimeMillis();
-    }
-
-    @Override
-    protected List<Map<String, String>> doInBackground(Void... params) {
-        db = new DBHelper(context);
-
+        counterLoadingBar = 0;
+        totalWord = 0;
         for (Map<String, String> tempmap : data) {
             for (Map.Entry<String, String> entry : tempmap.entrySet()) {
                 if (entry.getKey().equals("content") && !(entry.getValue() == null)) {
@@ -85,6 +86,25 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
                 }
             }
         }
+
+        for (int i = 0; i < content.size(); i++) {
+            word = content.get(i).split(" ");
+        }
+
+        loadingBar.setMax(word.length);
+        loadingBar.setVisibility(View.VISIBLE);
+
+        mainView.setVisibility(View.GONE);
+        tvInfo.setVisibility(View.VISIBLE);
+
+        startTime = System.currentTimeMillis();
+    }
+
+    @Override
+    protected List<Map<String, String>> doInBackground(Void... params) {
+        db = new DBHelper(context);
+
+
 
         try {
             for (int i = 0; i < content.size(); i++) {
@@ -213,6 +233,14 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
                             word[j] = word[j].substring(0, word[j].length() - 1);
                         }
                     }
+                    counterLoadingBar++;
+                    progressHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            loadingBar.setProgress(counterLoadingBar);
+                            tvInfo.setText("Current Progress = Stemming words | " + counterLoadingBar + " / " + word.length);
+                        }
+                    });
                     Log.d(TAG_LOG_D, "Hasil stem: " + word[j]);
                 }
                 //penyatuan kembali kata-kata yang distem
@@ -262,50 +290,26 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
     protected void onPostExecute(List<Map<String, String>> maps) {
         endTime = System.currentTimeMillis();
         Log.d(TAG_LOG_D, "Done, Time spent = " + (endTime-startTime)/1000 + " seconds | Total Words Stemmed = " + totalWord);
-        showProgress(true);
+        loadingBar.setVisibility(View.GONE);
+        tvInfo.setVisibility(View.GONE);
+        mainView.setVisibility(View.VISIBLE);
         //set adapter
         SimpleAdapter adapter = new SimpleAdapter(context, maps,
-                R.layout.row,
+                R.layout.listview_row,
                 new String[]{"id", "content"},
                 new int[]{R.id.tvId,
                         R.id.tvJudul});
 
         Toast.makeText(context, "Task done in " + (endTime-startTime)/1000 + " seconds", Toast.LENGTH_SHORT).show();
 
-        fragmentStoplistStemming_2.setData(data, "");
-        fragmentStoplistStemming_2.setAdapter(adapter, "stemming");
+        fragmentShowData.setData(data, "");
+        fragmentShowData.setAdapter(adapter, "stemming");
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-    private void showProgress(final boolean show) {
-        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
-        // for very easy animations. If available, use these APIs to fade-in
-        // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = context.getResources().getInteger(android.R.integer.config_shortAnimTime);
-
-            tampilanView.setVisibility(show ? View.GONE : View.VISIBLE);
-            tampilanView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    tampilanView.setVisibility(show ? View.GONE : View.VISIBLE);
-                }
-            });
-
-            loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
-            loadingView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
-                }
-            });
-        } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
-            tampilanView.setVisibility(show ? View.GONE : View.VISIBLE);
-        }
+    @Override
+    protected void onCancelled() {
+        loadingBar.setVisibility(View.GONE);
+        tvInfo.setVisibility(View.GONE);
+        mainView.setVisibility(View.VISIBLE);
     }
 }

@@ -39,9 +39,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import faiznoeris.tbitugaspraktek.temubalikinformasi.CheckData;
+import background_task.RefreshData;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
-import faiznoeris.tbitugaspraktek.temubalikinformasi.JSONParsing;
+import background_task.JSONParsing;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.MainActivity;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.R;
 import stemming_stoplist.Stemming;
@@ -51,7 +51,7 @@ import stemming_stoplist.Stoplist;
  * Created by Vellfire on 02/05/2017.
  */
 
-public class FragmentStemmingStoplist_2 extends Fragment {
+public class FragmentShowData extends Fragment {
 
 
     int counter = 0;
@@ -78,7 +78,7 @@ public class FragmentStemmingStoplist_2 extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_stemmingstoplist_2, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_showdata, container, false);
 
         data.clear();
 
@@ -122,13 +122,12 @@ public class FragmentStemmingStoplist_2 extends Fragment {
         });
 
 
+        //utama
         db = new DBHelper(getContext());
         if (db.isTBDataUtamaEmpty()) {
             //showProgress(true);
             getPagesAndTotalData getPagesAndTotalData = new getPagesAndTotalData();
             getPagesAndTotalData.execute();
-            //Log.d("ASU", "PAGES , DATA = " + totalDataNew + " " + totalPages);
-
         } else if (!(db.isTBDataUtamaEmpty())) {
             Cursor rs = db.getAllDataUtama();
             if (rs.moveToFirst()) {
@@ -148,45 +147,16 @@ public class FragmentStemmingStoplist_2 extends Fragment {
             }
 
             SimpleAdapter adapter = new SimpleAdapter(getContext(), data,
-                    R.layout.row,
+                    R.layout.listview_row,
                     new String[]{"id", "content", "title"},
                     new int[]{R.id.tvId,
                             R.id.tvJudul});
 
             lvUtama.setAdapter(adapter);
-        }/*else if (!(db.isTBDataUtamaEmpty())) {
-            CheckData checkData = new CheckData(getContext(), loadingBarHorizontal, mainView, tvInfo, this);
-            checkData.execute();
-            Cursor rs = db.getAllDataUtama();
-            if (rs.moveToFirst()) {
-                while (rs.isAfterLast() == false) {
-                    map = new HashMap<>(2);
-                    id = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN));
-                    //Log.d("SearchData", "Hasil Search, ID = " + id + " | Value Keyword - " + Value);
-                    konten = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_KONTEN));
-                    judul = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_JUDUL));
-                    //Log.d("AS", "Judul" + judul);
-                    map.put("id", id);
-                    map.put("content", konten);
-                    map.put("title", judul);
-                    data.add(map);
-                    rs.moveToNext();
-                }
-            }
-
-            SimpleAdapter adapter = new SimpleAdapter(getContext(), data,
-                    R.layout.row,
-                    new String[]{"id", "content", "title"},
-                    new int[]{R.id.tvId,
-                            R.id.tvJudul});
-
-            lvUtama.setAdapter(adapter);
-
-            //setData(data, "");
-        }*/
+        }
 
 
-
+        //stoplist
         if (!(db.isTBDataStoplistEmpty())) {
             Cursor rs = db.getAllDataStoplist();
             if (rs.moveToFirst()) {
@@ -204,7 +174,7 @@ public class FragmentStemmingStoplist_2 extends Fragment {
                     rs.moveToNext();
                 }
                 SimpleAdapter adapter = new SimpleAdapter(getContext(), data_stoplist,
-                        R.layout.row,
+                        R.layout.listview_row,
                         new String[]{"id", "content", "title"},
                         new int[]{R.id.tvId,
                                 R.id.tvJudul});
@@ -215,6 +185,8 @@ public class FragmentStemmingStoplist_2 extends Fragment {
             }
         }
 
+
+        //stemming
         if (!(db.isTBDataStemmingEmpty())) {
             Cursor rs = db.getAllDataStemming();
             if (rs.moveToFirst()) {
@@ -232,7 +204,7 @@ public class FragmentStemmingStoplist_2 extends Fragment {
                     rs.moveToNext();
                 }
                 SimpleAdapter adapter = new SimpleAdapter(getContext(), data_stemming,
-                        R.layout.row,
+                        R.layout.listview_row,
                         new String[]{"id", "content", "title"},
                         new int[]{R.id.tvId,
                                 R.id.tvJudul});
@@ -321,25 +293,12 @@ public class FragmentStemmingStoplist_2 extends Fragment {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         if (counter == 0) {
                             if (db.isTBDataStoplistEmpty()) {
-                                showProgress(true);
-                                Stoplist stoplist = new Stoplist(data, getContext(), FragmentStemmingStoplist_2.this, mainView, loadingView);
+                                //showProgress(true);
+                                Stoplist stoplist = new Stoplist(data, getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
                                 stoplist.execute();
                                 counter++;
                             }
-
-
-
-                        }/* else if (counter == 1) {
-                            try {
-                                showProgress(true);
-                                Stemming stemming = new Stemming(data, getContext(), FragmentStemmingStoplist_2.this, mainView, loadingView);
-                                stemming.execute();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            counter++;
-                            Toast.makeText(getContext(), "Stemming hanya bisa dilakukan 1 judul sekali, klik item pada listview stoplist.", Toast.LENGTH_SHORT).show();
-                        }*/else{
+                        }else{
                             Toast.makeText(getContext(), "Data sudah terisi.", Toast.LENGTH_SHORT).show();
                         }
 
@@ -362,8 +321,8 @@ public class FragmentStemmingStoplist_2 extends Fragment {
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         if (!(db.isTBDataUtamaEmpty())) {
-                            CheckData checkData = new CheckData(getContext(), loadingBarHorizontal, mainView, tvInfo, FragmentStemmingStoplist_2.this);
-                            checkData.execute();
+                            RefreshData refreshData = new RefreshData(getContext(), loadingBarHorizontal, mainView, tvInfo, FragmentShowData.this);
+                            refreshData.execute();
                         }
 
                     }
@@ -387,7 +346,7 @@ public class FragmentStemmingStoplist_2 extends Fragment {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         try {
                             if (!(db.isDataStemmingExist(id))) {
-                                showProgress(true);
+                                data_stemming.clear();
                                 map = new HashMap<>(2);
 
                                 map.put("id", id);
@@ -395,7 +354,7 @@ public class FragmentStemmingStoplist_2 extends Fragment {
                                 map.put("title", title);
 
                                 data_stemming.add(map);
-                                Stemming stemming = new Stemming(data_stemming, getContext(), FragmentStemmingStoplist_2.this, mainView, loadingView);
+                                Stemming stemming = new Stemming(data_stemming, getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
                                 stemming.execute();
                                 counter++;
                             }else{
@@ -411,39 +370,6 @@ public class FragmentStemmingStoplist_2 extends Fragment {
                 .create();
         return myQuittingDialogBox;
 
-    }
-
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-    private void showProgress(final boolean show) {
-        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
-        // for very easy animations. If available, use these APIs to fade-in
-        // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
-
-            mainView.setVisibility(show ? View.GONE : View.VISIBLE);
-            mainView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mainView.setVisibility(show ? View.GONE : View.VISIBLE);
-                }
-            });
-
-            loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
-            loadingView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
-                }
-            });
-        } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mainView.setVisibility(show ? View.GONE : View.VISIBLE);
-        }
     }
 
     public class getPagesAndTotalData extends AsyncTask<Void, Void, JSONObject> {
@@ -504,10 +430,10 @@ public class FragmentStemmingStoplist_2 extends Fragment {
         @Override
         protected void onPostExecute(JSONObject res) {
             try {
-                FragmentStemmingStoplist_2.totalPages = Integer.parseInt(res.getString("pages"));
-                FragmentStemmingStoplist_2.totalData = Integer.parseInt(res.getString("count_total"));
+                FragmentShowData.totalPages = Integer.parseInt(res.getString("pages"));
+                FragmentShowData.totalData = Integer.parseInt(res.getString("count_total"));
                 Log.d("ASU", "PAGES post execute" + totalData + " , " + totalPages);
-                JSONParsing jsonParsing = new JSONParsing(FragmentStemmingStoplist_2.this, getContext(), loadingBarHorizontal, mainView, tvInfo, totalPages, totalData);
+                JSONParsing jsonParsing = new JSONParsing(FragmentShowData.this, getContext(), loadingBarHorizontal, mainView, tvInfo, totalPages, totalData);
                 jsonParsing.execute();
             }catch (Exception e){
                 e.printStackTrace();

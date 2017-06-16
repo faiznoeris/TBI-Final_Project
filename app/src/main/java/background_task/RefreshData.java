@@ -1,4 +1,4 @@
-package faiznoeris.tbitugaspraktek.temubalikinformasi;
+package background_task;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -25,14 +25,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import fragment.FragmentStemmingStoplist_2;
+import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
+import fragment.FragmentShowData;
 
 /**
  * Created by Faiz Noeris on 5 Jun 2017.
  */
 
-public class CheckData extends AsyncTask<Void, Void, List<Map<String, String>>> {
-    private final String TAG_LOG_D = "CheckData";
+public class RefreshData extends AsyncTask<Void, Void, List<Map<String, String>>> {
+    private final String TAG_LOG_D = "RefreshData";
     private String WEBSITE_ADDRESS = "http://www.hirupmotekar.com/?json=1";
     public static int totalDataNew = 0;
     int counter = 0;
@@ -54,7 +55,7 @@ public class CheckData extends AsyncTask<Void, Void, List<Map<String, String>>> 
     JSONObject parentObject, e;
     JSONArray parentArray;
 
-    FragmentStemmingStoplist_2 fragmentStemmingStoplist_2;
+    FragmentShowData fragmentShowData;
     Context context;
 
     ProgressBar loadingBarHorizontal;
@@ -65,12 +66,12 @@ public class CheckData extends AsyncTask<Void, Void, List<Map<String, String>>> 
     Map<String, String> map;
     String id_tocheck = "", id_new = "";
 
-    public CheckData(Context context, ProgressBar loadingBarHorizontal, View mainView, TextView tvInfo, FragmentStemmingStoplist_2 fragmentStemmingStoplist_2) {
+    public RefreshData(Context context, ProgressBar loadingBarHorizontal, View mainView, TextView tvInfo, FragmentShowData fragmentShowData) {
         this.context = context;
         this.mainView = mainView;
         this.tvInfo = tvInfo;
         this.loadingBarHorizontal = loadingBarHorizontal;
-        this.fragmentStemmingStoplist_2 = fragmentStemmingStoplist_2;
+        this.fragmentShowData = fragmentShowData;
     }
 
     @Override
@@ -182,7 +183,7 @@ public class CheckData extends AsyncTask<Void, Void, List<Map<String, String>>> 
 
             Log.d(TAG_LOG_D, "Checking old data and new data");
 
-            //counter = 0;
+            //counterLoadingBar = 0;
             if (totalDataNew == size) {
                 for (Map<String, String> tempmap_1 : data_tocheck) {
                     counter++;
@@ -225,23 +226,23 @@ public class CheckData extends AsyncTask<Void, Void, List<Map<String, String>>> 
             /*for(int i = 0; i < size; i++){
                 if (!(db.isKataDasarExist(str))) {
                     if (db.addKataDasar(str)) {
-                        //counter++;
+                        //counterLoadingBar++;
                         progressHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                loadingBarHorizontal.setProgress(counter);
-                                tvInfo.setText("Current Progress = Adding data_tocheck - " + counter + " / 28524");
+                                loadingBar.setProgress(counterLoadingBar);
+                                tvInfo.setText("Current Progress = Adding data_tocheck - " + counterLoadingBar + " / 28524");
                             }
                         });
-                        Log.d(TAG_LOG_D, "Data Inserted. (" + counter + ")");// - progressbar(" + loadingBarHorizontal.getProgress() + ")");
+                        Log.d(TAG_LOG_D, "Data Inserted. (" + counterLoadingBar + ")");// - progressbar(" + loadingBar.getProgress() + ")");
                     }
                     //Log.d(TAG_LOG_D, "Data Already Inserted.");
                 } else {
                     progressHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            loadingBarHorizontal.setProgress(counter);
-                            tvInfo.setText("Current Progress = Skipping existing data_tocheck - " + counter);
+                            loadingBar.setProgress(counterLoadingBar);
+                            tvInfo.setText("Current Progress = Skipping existing data_tocheck - " + counterLoadingBar);
                         }
                     });
                     Log.d(TAG_LOG_D, "Skipping existing Data");
@@ -262,13 +263,13 @@ public class CheckData extends AsyncTask<Void, Void, List<Map<String, String>>> 
         stopLoading();
 
         /*SimpleAdapter adapter = new SimpleAdapter(context, res,
-                R.layout.row,
+                R.layout.listview_row,
                 new String[]{"id", "content", "title"},
                 new int[]{R.id.tvId,
                         R.id.tvJudul});
 
-//        fragmentStemmingStoplist_2.setData(res, "");
-//        fragmentStemmingStoplist_2.setAdapter(adapter, "utama");
+//        fragmentShowData.setData(res, "");
+//        fragmentShowData.setAdapter(adapter, "utama");
         */
         endTime = System.currentTimeMillis();
         Toast.makeText(context, "Time spent - " + (endTime - startTime) / 1000 + " seconds", Toast.LENGTH_SHORT).show();

@@ -6,9 +6,12 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -17,9 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
-import faiznoeris.tbitugaspraktek.temubalikinformasi.InsertData;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.R;
-import fragment.FragmentStemmingStoplist_2;
+import fragment.FragmentShowData;
 
 /**
  * Created by Vellfire on 20/04/2017.
@@ -31,15 +33,18 @@ public class Stoplist extends AsyncTask<Void, String, List<Map<String, String>>>
             "tahun", "sudah", "atau", "saat", "oleh", "menjadi", "orang", "ia", "telah", "adalah", "seperti", "sebagai", "bahwa", "dapat", "para", "harus", "namun", "kita", "dua", "satu", "masih", "hari",};
     private final String TAG_LOG_D = "Stoplisting";
 
+    int counterLoadingBar = 0;
     String[] stoplisting;
+    int countTotalWord = 0;
 
-    View loadingView;
-    View tampilanView;
 
     DBHelper db;
 
-    FragmentStemmingStoplist_2 fragmentStoplistStemming_2;
-    InsertData insertData;
+    ProgressBar loadingBar;
+    View mainView;
+    TextView tvInfo;
+
+    FragmentShowData fragmentShowData;
     Context context;
 
     Map<String, String> map;
@@ -51,24 +56,22 @@ public class Stoplist extends AsyncTask<Void, String, List<Map<String, String>>>
 
     String str_id,str_content,str_title,str_removedword;
 
-    public Stoplist(List<Map<String, String>> data, Context context, FragmentStemmingStoplist_2 fragmentStoplistStemming_2, View loadingView, View tampilanView) {
+    private Handler progressHandler = new Handler();
+
+    public Stoplist(List<Map<String, String>> data, Context context, FragmentShowData fragmentShowData, ProgressBar loadingBar, View mainView, TextView tvInfo) {
         this.context = context;
         this.data = data;
-        this.loadingView = loadingView;
-        this.tampilanView = tampilanView;
-        this.fragmentStoplistStemming_2 = fragmentStoplistStemming_2;
+        this.loadingBar = loadingBar;
+        this.mainView = mainView;
+        this.tvInfo = tvInfo;
+        this.fragmentShowData = fragmentShowData;
 
     }
 
     @Override
     protected void onPreExecute() {
-        startTime = System.currentTimeMillis();
-    }
-
-    @Override
-    protected List<Map<String, String>> doInBackground(Void... params) {
-        db = new DBHelper(context);
-
+        counterLoadingBar = 0;
+        countTotalWord = 0;
         //memecah data
         for (Map<String, String> tempmap : data) {
             for (Map.Entry<String, String> entry : tempmap.entrySet()) {
@@ -82,6 +85,26 @@ public class Stoplist extends AsyncTask<Void, String, List<Map<String, String>>>
                 removedword.add("A");
             }
         }
+
+        for (int i = 0; i < content.size(); i++) {
+            stoplisting = content.get(i).split(" "); //pecah kalimat menjadi per kata
+            countTotalWord += stoplisting.length;
+        }
+
+        loadingBar.setMax(countTotalWord);
+        loadingBar.setVisibility(View.VISIBLE);
+
+        mainView.setVisibility(View.GONE);
+        tvInfo.setVisibility(View.VISIBLE);
+
+        startTime = System.currentTimeMillis();
+    }
+
+    @Override
+    protected List<Map<String, String>> doInBackground(Void... params) {
+        db = new DBHelper(context);
+
+
 
         //proses stoplist
         for (int i = 0; i < content.size(); i++) {
@@ -98,6 +121,14 @@ public class Stoplist extends AsyncTask<Void, String, List<Map<String, String>>>
                         Log.d(TAG_LOG_D, "Word removed - " + stopwords_list[k]);
                     }
                 }
+                counterLoadingBar++;
+                progressHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadingBar.setProgress(counterLoadingBar);
+                        tvInfo.setText("Current Progress = Removing words | " + counterLoadingBar + " / " + countTotalWord);
+                    }
+                });
             }
 
             //penyatuan kata
@@ -137,54 +168,26 @@ public class Stoplist extends AsyncTask<Void, String, List<Map<String, String>>>
     protected void onPostExecute(List<Map<String, String>> data) {
         endTime = System.currentTimeMillis();
         Log.d(TAG_LOG_D, "Done, Time spent = " + (endTime-startTime)/1000 + " seconds");
-        showProgress(true);
+        loadingBar.setVisibility(View.GONE);
+        tvInfo.setVisibility(View.GONE);
+        mainView.setVisibility(View.VISIBLE);
         SimpleAdapter adapter = new SimpleAdapter(context, data,
-                R.layout.row,
+                R.layout.listview_row,
                 new String[]{"id", "content", "title"},
                 new int[]{R.id.tvId,
                         R.id.tvJudul});
 
         Toast.makeText(context, "Task done in " + (endTime-startTime)/1000 + " seconds", Toast.LENGTH_SHORT).show();
 
-        fragmentStoplistStemming_2.setData(data, "");
-        fragmentStoplistStemming_2.setAdapter(adapter, "stoplist");
-
-        /*if(db.isTBKataDasarEmpty()) {
-            InsertData insertData = new InsertData(context, loadingView, null, tampilanView, null, data, fragmentStoplistStemming_2);
-            insertData.execute("insert_stoplist");
-        }*/
+        fragmentShowData.setData(data, "");
+        fragmentShowData.setAdapter(adapter, "stoplist");
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-    private void showProgress(final boolean show) {
-        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
-        // for very easy animations. If available, use these APIs to fade-in
-        // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = context.getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-            tampilanView.setVisibility(show ? View.GONE : View.VISIBLE);
-            tampilanView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    tampilanView.setVisibility(show ? View.GONE : View.VISIBLE);
-                }
-            });
-
-            loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
-            loadingView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
-                }
-            });
-        } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            loadingView.setVisibility(show ? View.VISIBLE : View.GONE);
-            tampilanView.setVisibility(show ? View.GONE : View.VISIBLE);
-        }
+    @Override
+    protected void onCancelled() {
+        loadingBar.setVisibility(View.GONE);
+        tvInfo.setVisibility(View.GONE);
+        mainView.setVisibility(View.VISIBLE);
     }
 }

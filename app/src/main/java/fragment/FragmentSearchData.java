@@ -21,19 +21,14 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import junit.framework.Assert;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 
-import java.security.Key;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
@@ -135,7 +130,7 @@ public class FragmentSearchData extends Fragment {
                         listData.setVisibility(View.VISIBLE);
 
                         SimpleAdapter adapter = new SimpleAdapter(getContext(), data,
-                                R.layout.row,
+                                R.layout.listview_row,
                                 new String[]{"id", "content", "title"},
                                 new int[]{R.id.tvId,
                                         R.id.tvJudul});
@@ -211,7 +206,7 @@ public class FragmentSearchData extends Fragment {
         int id = item.getItemId();
         if (id == R.id.action_getdata) {
             FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
-            ft.replace(R.id.mainFrame, new FragmentStemmingStoplist_2());
+            ft.replace(R.id.mainFrame, new FragmentShowData());
             ft.commit();
         }
         return super.onOptionsItemSelected(item);
