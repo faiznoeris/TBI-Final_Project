@@ -175,7 +175,7 @@ public class FragmentSearchData extends Fragment {
             }
         });
 
-        ((MainActivity) getActivity()).setActionBarTitle("Search Data");
+        ((MainActivity) getActivity()).setActionBarTitle("STBI");
 
         return rootView;
     }
@@ -189,17 +189,27 @@ public class FragmentSearchData extends Fragment {
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
         MenuItem item=menu.findItem(R.id.action_getdata);
-        item.setVisible(false);
+        item.setVisible(true);
         MenuItem item2=menu.findItem(R.id.action_searchdata);
         item2.setVisible(false);
         MenuItem item3=menu.findItem(R.id.action_back);
-        item3.setVisible(true);
+        item3.setVisible(false);
+        MenuItem item4 = menu.findItem(R.id.action_refresh);
+        item4.setVisible(false);
+        MenuItem item5 = menu.findItem(R.id.action_bobot);
+        item5.setVisible(false);
+        MenuItem item6 = menu.findItem(R.id.action_index);
+        item6.setVisible(false);
+        MenuItem item7 = menu.findItem(R.id.action_about);
+        item7.setVisible(false);
+        MenuItem item8 = menu.findItem(R.id.action_stoplist);
+        item8.setVisible(false);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_back) {
+        if (id == R.id.action_getdata) {
             FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
             ft.replace(R.id.mainFrame, new FragmentStemmingStoplist_2());
             ft.commit();

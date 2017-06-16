@@ -164,11 +164,12 @@ public class JSONParsing extends AsyncTask<Void, String, List<Map<String, String
                     map.put("id", id);
                     map.put("content", content);
                     map.put("title", Html.fromHtml(e.getString("title")).toString());
+                    map.put("url", Html.fromHtml(e.getString("url")).toString());
                     data.add(map);
                     if (!(db.isDataUtamaExist(id))) {
-                        if (db.addDataUtama(id, content, Html.fromHtml(e.getString("title")).toString())) {
+                        if (db.addDataUtama(id, content, Html.fromHtml(e.getString("title")).toString(), Html.fromHtml(e.getString("url")).toString())) {
                             //counter++;
-                            Log.d(TAG_LOG_D, "Data JSON Inserted. (" + id + ", " + content + ")");
+                            Log.d(TAG_LOG_D, "Data JSON Inserted. (" + id + ", " + Html.fromHtml(e.getString("url")).toString() + ")");
                         }
                     }
                     Log.d(TAG_LOG_D, "Data JSON added - " + id);

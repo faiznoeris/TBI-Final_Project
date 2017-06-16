@@ -29,7 +29,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private final Context dbContext;
     //context.getApplicationInfo().dataDir + "/databases/"
 
-    private static final String DATABASE_NAME = "TBI.db";
+    private static final String DATABASE_NAME = "TBI-withindex.db";
     private static final String KATADASAR_TABLE_NAME = "tb_katadasar";
     private static final String KATADASAR_COLUMN_ID = "id";
     private static final String KATADASAR_COLUMN_KATADASAR = "katadasar";
@@ -42,6 +42,8 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String DATA_COLUMN_IDKONTEN = "idkonten";
     public static final String DATA_COLUMN_KONTEN = "konten";
     public static final String DATA_COLUMN_JUDUL = "judul";
+    public static final String DATA_COLUMN_URL = "link_url";
+    public static final String DATA_COLUMN_COUNTINDEX = "count_index";
     public static final String DATA_COLUMN_REMOVEDWORD = "removedword";
 
     private static final String QUERY_CHECK_TB_KATADASAR_SIZE = "SELECT COUNT(*) FROM " + KATADASAR_TABLE_NAME;
@@ -429,7 +431,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     //masukkan kata dasar ke dalam table
-    public boolean addDataUtama(String id, String konten, String title) {
+    public boolean addDataUtama(String id, String konten, String title, String url) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = null;
         try {
@@ -437,6 +439,7 @@ public class DBHelper extends SQLiteOpenHelper {
             contentValues.put(DATA_COLUMN_IDKONTEN, id);
             contentValues.put(DATA_COLUMN_KONTEN, konten);
             contentValues.put(DATA_COLUMN_JUDUL, title);
+            contentValues.put(DATA_COLUMN_URL, url);
             db.insert(DATA_UTAMA_TABLE_NAME, null, contentValues);
         } catch (Exception e) {
             e.printStackTrace();

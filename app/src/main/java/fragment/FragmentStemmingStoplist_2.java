@@ -26,7 +26,6 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -109,7 +108,7 @@ public class FragmentStemmingStoplist_2 extends Fragment {
                 String str_removedword = map.get("removedword");
 
                 //Toast.makeText(getContext(), id_click, Toast.LENGTH_LONG).show();
-                AlertDialog diaBox = AskStemming(str_id, str_content, str_title, str_removedword);
+                AlertDialog diaBox = dialogStemming(str_id, str_content, str_title, str_removedword);
                 diaBox.show();
             }
         });
@@ -131,6 +130,31 @@ public class FragmentStemmingStoplist_2 extends Fragment {
             //Log.d("ASU", "PAGES , DATA = " + totalDataNew + " " + totalPages);
 
         } else if (!(db.isTBDataUtamaEmpty())) {
+            Cursor rs = db.getAllDataUtama();
+            if (rs.moveToFirst()) {
+                while (rs.isAfterLast() == false) {
+                    map = new HashMap<>(2);
+                    this.id = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN));
+                    //Log.d("SearchData", "Hasil Search, ID = " + id + " | Value Keyword - " + Value);
+                    konten = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_KONTEN));
+                    judul = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_JUDUL));
+                    //Log.d("AS", "Judul" + judul);
+                    map.put("id", this.id);
+                    map.put("content", konten);
+                    map.put("title", judul);
+                    data.add(map);
+                    rs.moveToNext();
+                }
+            }
+
+            SimpleAdapter adapter = new SimpleAdapter(getContext(), data,
+                    R.layout.row,
+                    new String[]{"id", "content", "title"},
+                    new int[]{R.id.tvId,
+                            R.id.tvJudul});
+
+            lvUtama.setAdapter(adapter);
+        }/*else if (!(db.isTBDataUtamaEmpty())) {
             CheckData checkData = new CheckData(getContext(), loadingBarHorizontal, mainView, tvInfo, this);
             checkData.execute();
             Cursor rs = db.getAllDataUtama();
@@ -159,7 +183,9 @@ public class FragmentStemmingStoplist_2 extends Fragment {
             lvUtama.setAdapter(adapter);
 
             //setData(data, "");
-        }
+        }*/
+
+
 
         if (!(db.isTBDataStoplistEmpty())) {
             Cursor rs = db.getAllDataStoplist();
@@ -217,7 +243,7 @@ public class FragmentStemmingStoplist_2 extends Fragment {
             }
         }
 
-        ((MainActivity) getActivity()).setActionBarTitle("Stemming dan Stoplist #2");
+        ((MainActivity) getActivity()).setActionBarTitle("STBI");
 
         return rootView;
     }
@@ -231,11 +257,13 @@ public class FragmentStemmingStoplist_2 extends Fragment {
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
         MenuItem item = menu.findItem(R.id.action_getdata);
-        item.setVisible(true);
+        item.setVisible(false);
         MenuItem item2 = menu.findItem(R.id.action_searchdata);
-        item2.setVisible(true);
+        item2.setVisible(false);
         MenuItem item3 = menu.findItem(R.id.action_back);
-        item3.setVisible(false);
+        item3.setVisible(true);
+
+
     }
 
     public void setAdapter(SimpleAdapter adapter, String operasi) {
@@ -259,26 +287,31 @@ public class FragmentStemmingStoplist_2 extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_getdata) {
-            if (counter == 2) {
+        if (id == R.id.action_refresh) {
+            /*if (counter == 2) {
                 Toast.makeText(getContext(), "Data sudah terisi semua!", Toast.LENGTH_SHORT).show();
             } else {
-                AlertDialog diaBox = AskOption();
+                AlertDialog diaBox = dialogStoplist();
                 diaBox.show();
                 return true;
-            }
-        } else if (id == R.id.action_searchdata) {
+            }*/
+            AlertDialog diaBox = dialogRefresh();
+            diaBox.show();
+        } else if (id == R.id.action_back) {
             FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
             ft.replace(R.id.mainFrame, new FragmentSearchData());
             ft.commit();
+        } else if (id == R.id.action_stoplist){
+            AlertDialog diaBox = dialogStoplist();
+            diaBox.show();
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private AlertDialog AskOption() {
+    private AlertDialog dialogStoplist() {
         AlertDialog myQuittingDialogBox = new AlertDialog.Builder(getContext())
-                .setTitle("Add Data")
-                .setMessage("Isi data sekarang?")
+                .setTitle("Stoplist")
+                .setMessage("Lakukan stoplist sekarang?")
                 .setNegativeButton("No", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
@@ -317,7 +350,29 @@ public class FragmentStemmingStoplist_2 extends Fragment {
     }
 
 
-    private AlertDialog AskStemming(final String id, final String content, final String title, String removedword) {
+    private AlertDialog dialogRefresh() {
+        AlertDialog myQuittingDialogBox = new AlertDialog.Builder(getContext())
+                .setTitle("Refresh data")
+                .setMessage("Lakukan refresh data sekarang?")
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        if (!(db.isTBDataUtamaEmpty())) {
+                            CheckData checkData = new CheckData(getContext(), loadingBarHorizontal, mainView, tvInfo, FragmentStemmingStoplist_2.this);
+                            checkData.execute();
+                        }
+
+                    }
+                })
+                .create();
+        return myQuittingDialogBox;
+    }
+
+    private AlertDialog dialogStemming(final String id, final String content, final String title, String removedword) {
         AlertDialog myQuittingDialogBox =new AlertDialog.Builder(getContext())
                 .setTitle("Stemming")
                 .setMessage(Html.fromHtml("<b>Removed Word:</b> "+ removedword))

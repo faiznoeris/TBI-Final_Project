@@ -91,7 +91,9 @@ public class Stoplist extends AsyncTask<Void, String, List<Map<String, String>>>
             for (int j = 0; j < stoplisting.length; j++) {
                 for (int k = 0; k < stopwords_list.length; k++) {
                     if (stoplisting[j].equalsIgnoreCase(stopwords_list[k])) {
-                        removedword_temp.append(stoplisting[j] + ", ");
+                        if(!removedword_temp.toString().contains(stoplisting[j])) {
+                            removedword_temp.append(stoplisting[j] + ", ");
+                        }
                         stoplisting[j] = "";
                         Log.d(TAG_LOG_D, "Word removed - " + stopwords_list[k]);
                     }

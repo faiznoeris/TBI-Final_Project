@@ -19,5 +19,29 @@
         android:title="Search Data"
         app:showAsAction="always"
         android:icon="@android:drawable/ic_menu_revert"/>
-
+    <item
+        android:id="@+id/action_refresh"
+        android:orderInCategory="100"
+        android:title="Refresh data"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_stoplist"
+        android:orderInCategory="100"
+        android:title="Proses stoplist"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_index"
+        android:orderInCategory="100"
+        android:title="Buat index"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_bobot"
+        android:orderInCategory="100"
+        android:title="Hitung bobot"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_about"
+        android:orderInCategory="100"
+        android:title="About"
+        app:showAsAction="never" />
 </menu>

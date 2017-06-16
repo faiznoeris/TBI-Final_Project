@@ -15,6 +15,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import fragment.FragmentHitungKata;
+import fragment.FragmentSearchData;
 import fragment.FragmentStemmingStoplist_1;
 import fragment.FragmentStemmingStoplist_2;
 
@@ -34,14 +35,14 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        /*DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        navigationView.setNavigationItemSelectedListener(this);*/
 
         //-------------------------------------------------------------------------------
 
@@ -57,10 +58,12 @@ public class MainActivity extends AppCompatActivity
         db = new DBHelper(this);
         //showProgress(true);
 
-        navigationView.setCheckedItem(R.id.nav_drawer1);
+        //navigationView.setCheckedItem(R.id.nav_drawer1);
 
+        //FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        //ft.replace(R.id.mainFrame, new FragmentHitungKata());
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        ft.replace(R.id.mainFrame, new FragmentHitungKata());
+        ft.replace(R.id.mainFrame, new FragmentSearchData());
         ft.commit();
 
         /*if(db.isTBKataDasarEmpty()) {
