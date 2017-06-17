@@ -37,6 +37,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String DATA_STOPLIST_TABLE_NAME = "tb_data_stoplist";
     private static final String DATA_STEMMING_TABLE_NAME = "tb_data_stemming";
     private static final String DATA_UTAMA_TABLE_NAME = "tb_data_utama";
+    private static final String DATA_INDEX_TABLE_NAME = "tb_index";
 
     private static final String DATA_COLUMN_ID = "id";
     public static final String DATA_COLUMN_IDKONTEN = "idkonten";
@@ -45,6 +46,8 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String DATA_COLUMN_URL = "link_url";
     public static final String DATA_COLUMN_COUNTINDEX = "count_index";
     public static final String DATA_COLUMN_REMOVEDWORD = "removedword";
+    public static final String DATA_COLUMN_TERM = "term";
+    public static final String DATA_COLUMN_BOBOT = "bobot";
 
     private static final String QUERY_CHECK_TB_KATADASAR_SIZE = "SELECT COUNT(*) FROM " + KATADASAR_TABLE_NAME;
     private static final String QUERY_CHECK_TB_DATAUTAMA_SIZE = "SELECT COUNT(*) FROM " + DATA_UTAMA_TABLE_NAME;
@@ -87,14 +90,14 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    private void copyDataBase() throws IOException{
+    private void copyDataBase() throws IOException {
         InputStream myInput = dbContext.getAssets().open(DATABASE_NAME);
         String outFileName = DATABASE_PATH + DATABASE_NAME;
         OutputStream myOutput = new FileOutputStream(outFileName);
 
         byte[] buffer = new byte[1024];
         int length;
-        while ((length = myInput.read(buffer))>0){
+        while ((length = myInput.read(buffer)) > 0) {
             myOutput.write(buffer, 0, length);
         }
 
@@ -396,7 +399,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return null;
     }
 
-    public int getSizeDataUtama(){
+    public int getSizeDataUtama() {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor res = null;
         try {
@@ -436,7 +439,7 @@ public class DBHelper extends SQLiteOpenHelper {
         ContentValues contentValues = null;
         try {
             contentValues = new ContentValues();
-            contentValues.put(DATA_COLUMN_IDKONTEN, id);
+            contentValues.put(DATA_COLUMN_IDKONTEN, Integer.parseInt(id));
             contentValues.put(DATA_COLUMN_KONTEN, konten);
             contentValues.put(DATA_COLUMN_JUDUL, title);
             contentValues.put(DATA_COLUMN_URL, url);
@@ -455,7 +458,7 @@ public class DBHelper extends SQLiteOpenHelper {
         ContentValues contentValues = null;
         try {
             contentValues = new ContentValues();
-            contentValues.put(DATA_COLUMN_IDKONTEN, id);
+            contentValues.put(DATA_COLUMN_IDKONTEN, Integer.parseInt(id));
             contentValues.put(DATA_COLUMN_KONTEN, konten);
             contentValues.put(DATA_COLUMN_JUDUL, title);
             contentValues.put(DATA_COLUMN_REMOVEDWORD, removedword);
@@ -474,7 +477,7 @@ public class DBHelper extends SQLiteOpenHelper {
         ContentValues contentValues = null;
         try {
             contentValues = new ContentValues();
-            contentValues.put(DATA_COLUMN_IDKONTEN, id);
+            contentValues.put(DATA_COLUMN_IDKONTEN, Integer.parseInt(id));
             contentValues.put(DATA_COLUMN_KONTEN, konten);
             contentValues.put(DATA_COLUMN_JUDUL, title);
             db.insert(DATA_STEMMING_TABLE_NAME, null, contentValues);
@@ -489,15 +492,15 @@ public class DBHelper extends SQLiteOpenHelper {
 
     //  ADDING DATA
 
-    public boolean updateDataUtama(String idkonten, String judul, String konten){
+    public boolean updateDataUtama(String idkonten, String judul, String konten) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         try {
-            if(judul == "") {
+            if (judul == "") {
                 contentValues.put(DATA_COLUMN_KONTEN, konten);
                 db.update(DATA_UTAMA_TABLE_NAME, contentValues, DATA_COLUMN_IDKONTEN + " = " + Integer.parseInt(idkonten), null);
                 return true;
-            }else{
+            } else {
                 contentValues.put(DATA_COLUMN_JUDUL, judul);
                 db.update(DATA_UTAMA_TABLE_NAME, contentValues, DATA_COLUMN_IDKONTEN + " = " + Integer.parseInt(idkonten), null);
                 return true;
@@ -516,13 +519,78 @@ public class DBHelper extends SQLiteOpenHelper {
 
     //  REWMOVE DATA
 
-    public int delDataStoplist(String idkonten){
+    public int delDataStoplist(String idkonten) {
         SQLiteDatabase db = this.getWritableDatabase();
         return db.delete(DATA_STOPLIST_TABLE_NAME, DATA_COLUMN_IDKONTEN + " = " + idkonten, null);
     }
 
-    public int delDataStemming(String idkonten){
+    public int delDataStemming(String idkonten) {
         SQLiteDatabase db = this.getWritableDatabase();
         return db.delete(DATA_STEMMING_TABLE_NAME, DATA_COLUMN_IDKONTEN + " = " + idkonten, null);
+    }
+
+    //  INDEXING
+
+    public int getCountIndex(String term, String id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res;
+        try {
+            res = db.rawQuery("SELECT count_index FROM " + DATA_INDEX_TABLE_NAME + " WHERE " + DATA_COLUMN_TERM + " = '" + term + "' AND "
+                    + DATA_COLUMN_IDKONTEN + " = " + Integer.parseInt(id), null);
+            res.moveToFirst();
+            if(res.getCount() > 0) {
+                return res.getInt(res.getColumnIndex(DATA_COLUMN_COUNTINDEX));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public boolean updateTbIndex_Indexing(String idkonten, int count, String term) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        try {
+            contentValues.put(DATA_COLUMN_COUNTINDEX, count);
+            db.update(DATA_INDEX_TABLE_NAME, contentValues, DATA_COLUMN_IDKONTEN + " = " + Integer.parseInt(idkonten) + " AND " + DATA_COLUMN_TERM + " = '" + term + "'", null);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //db.close();
+        }
+        return false;
+    }
+
+    public boolean addTbIndex_Indexing(String idkonten, String term) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = null;
+        try {
+            contentValues = new ContentValues();
+            contentValues.put(DATA_COLUMN_IDKONTEN, Integer.parseInt(idkonten));
+            contentValues.put(DATA_COLUMN_TERM, term);
+            contentValues.put(DATA_COLUMN_COUNTINDEX, 1);
+            contentValues.put(DATA_COLUMN_BOBOT, 0);
+            db.insert(DATA_INDEX_TABLE_NAME, null, contentValues);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+
+    public boolean truncateTbIndexing() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res;
+        try {
+            res = db.rawQuery("TRUNCATE TABLE " + DATA_INDEX_TABLE_NAME, null);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return false;
     }
 }

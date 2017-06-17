@@ -67,12 +67,6 @@ public class FragmentSearchData extends Fragment {
 
         db = new DBHelper(getContext());
 
-
-
-
-
-
-
         search.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

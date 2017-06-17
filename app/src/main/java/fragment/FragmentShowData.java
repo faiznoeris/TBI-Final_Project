@@ -1,12 +1,8 @@
 package fragment;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.annotation.TargetApi;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -44,8 +40,9 @@ import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
 import background_task.JSONParsing;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.MainActivity;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.R;
-import stemming_stoplist.Stemming;
-import stemming_stoplist.Stoplist;
+import stbi.Indexing;
+import stbi.Stemming;
+import stbi.Stoplist;
 
 /**
  * Created by Vellfire on 02/05/2017.
@@ -276,6 +273,9 @@ public class FragmentShowData extends Fragment {
         } else if (id == R.id.action_stoplist){
             AlertDialog diaBox = dialogStoplist();
             diaBox.show();
+        } else if (id == R.id.action_index){
+            Indexing indexing = new Indexing(getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
+            indexing.execute();
         }
         return super.onOptionsItemSelected(item);
     }

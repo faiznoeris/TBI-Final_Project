@@ -1,11 +1,7 @@
-package stemming_stoplist;
+package stbi;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
