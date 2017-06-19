@@ -193,6 +193,12 @@ public class FragmentSearchData extends Fragment {
         item7.setVisible(false);
         MenuItem item8 = menu.findItem(R.id.action_stoplist);
         item8.setVisible(false);
+        MenuItem item9 = menu.findItem(R.id.action_vektor);
+        item9.setVisible(false);
+        MenuItem item10 = menu.findItem(R.id.action_showindex);
+        item10.setVisible(false);
+        MenuItem item11 = menu.findItem(R.id.action_showvektor);
+        item11.setVisible(false);
     }
 
     @Override

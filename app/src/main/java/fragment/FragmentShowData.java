@@ -44,6 +44,7 @@ import stbi.Bobot;
 import stbi.Indexing;
 import stbi.Stemming;
 import stbi.Stoplist;
+import stbi.Vektor;
 
 /**
  * Created by Vellfire on 02/05/2017.
@@ -286,10 +287,33 @@ public class FragmentShowData extends Fragment {
                 Bobot bobot = new Bobot(getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
                 bobot.execute();
             }else{
-                Toast.makeText(getContext(), "Data stemming masih kosong!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Data index masih kosong!", Toast.LENGTH_SHORT).show();
+            }
+        } else if (id == R.id.action_about){
+            AlertDialog diaBox = dialogAbout();
+            diaBox.show();
+        } else if(id == R.id.action_vektor){
+            if(!db.isTBDataIndexEmpty()) {
+                Vektor bobot = new Vektor(getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
+                bobot.execute();
+            }else{
+                Toast.makeText(getContext(), "Data index masih kosong!", Toast.LENGTH_SHORT).show();
             }
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private AlertDialog dialogAbout() {
+        AlertDialog myQuittingDialogBox = new AlertDialog.Builder(getContext())
+                .setTitle("About")
+                .setMessage(Html.fromHtml("Anggota Kelompok:<br><br>1. Bayu Andrianto <b>(0021)</b><br>2. Syaeful Hidayat <b>(0025)</b><br>3. Muhammad Faiz Noeris <b>(0027)</b><br>4. Rifdhotul Alfiansyah <b>(0033)</b><br>5. Maskur Al Asad <b>(0035)</b><br>6. Yogi Hendra <b>(0032)</b><br>7. Yosua Sandy Garsa <b>(0034)</b><br>"))
+                .setNegativeButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .create();
+        return myQuittingDialogBox;
     }
 
     private AlertDialog dialogStoplist() {

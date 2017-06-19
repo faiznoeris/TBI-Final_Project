@@ -100,7 +100,7 @@ public class Bobot extends AsyncTask<Void, String, Void> {
                     @Override
                     public void run() {
                         loadingBar.setProgress(counterLoadingBar);
-                        tvInfo.setText("Current Progress = Bobot | " + counterLoadingBar + " / " + n);
+                        tvInfo.setText("Current Progress = Bobot | " + counterLoadingBar + " / " + n + " term");
                     }
                 });
 

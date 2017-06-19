@@ -30,7 +30,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private final Context dbContext;
     //context.getApplicationInfo().dataDir + "/databases/"
 
-    private static final String DATABASE_NAME = "TBI-withdatautama.db";
+    private static final String DATABASE_NAME = "TBI-withdatastoplist(last).db";
     private static final String KATADASAR_TABLE_NAME = "tb_katadasar";
     private static final String KATADASAR_COLUMN_ID = "id";
     private static final String KATADASAR_COLUMN_KATADASAR = "katadasar";
@@ -39,6 +39,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String DATA_STEMMING_TABLE_NAME = "tb_data_stemming";
     private static final String DATA_UTAMA_TABLE_NAME = "tb_data_utama";
     private static final String DATA_INDEX_TABLE_NAME = "tb_index";
+    private static final String DATA_VEKTOR_TABLE_NAME = "tb_vektor";
 
     public static final String DATA_COLUMN_ID = "id";
     public static final String DATA_COLUMN_IDKONTEN = "idkonten";
@@ -49,12 +50,14 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String DATA_COLUMN_REMOVEDWORD = "removedword";
     public static final String DATA_COLUMN_TERM = "term";
     public static final String DATA_COLUMN_BOBOT = "bobot";
+    public static final String DATA_COLUMN_PANJANGVEKTOR = "panjang";
 
     private static final String QUERY_CHECK_TB_KATADASAR_SIZE = "SELECT COUNT(*) FROM " + KATADASAR_TABLE_NAME;
     private static final String QUERY_CHECK_TB_DATAUTAMA_SIZE = "SELECT COUNT(*) FROM " + DATA_UTAMA_TABLE_NAME;
     private static final String QUERY_CHECK_TB_DATASTOPLIST_SIZE = "SELECT COUNT(*) FROM " + DATA_STOPLIST_TABLE_NAME;
     private static final String QUERY_CHECK_TB_DATASTEMMING_SIZE = "SELECT COUNT(*) FROM " + DATA_STEMMING_TABLE_NAME;
     private static final String QUERY_CHECK_TB_DATAINDEX_SIZE = "SELECT COUNT(*) FROM " + DATA_INDEX_TABLE_NAME;
+    private static final String QUERY_CHECK_TB_DATAVEKTOR_SIZE = "SELECT COUNT(*) FROM " + DATA_VEKTOR_TABLE_NAME;
 
     private static final String QUERY_GET_ALL_DATA_UTAMA = "select * from " + DATA_UTAMA_TABLE_NAME;
     private static final String QUERY_GET_ALL_DATA_STOPLIST = "SELECT * FROM " + DATA_STOPLIST_TABLE_NAME;
@@ -275,6 +278,25 @@ public class DBHelper extends SQLiteOpenHelper {
         return true;
     }
 
+    public boolean isTBDataVektorEmpty() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery(QUERY_CHECK_TB_DATAVEKTOR_SIZE, null);
+            res.moveToFirst();
+            int count = res.getInt(0);
+            if (count > 0) {
+                res.close();
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+
     public boolean isDataUtamaExist(String id) {
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor res = null;
@@ -427,6 +449,21 @@ public class DBHelper extends SQLiteOpenHelper {
             res = db.rawQuery(QUERY_GET_ALL_DATA_UTAMA, null);
             res.moveToFirst();
             return res.getCount();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return 0;
+    }
+
+    public int getSizeDataStemming() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery(QUERY_GET_ALL_DATA_STEMMING, null);
+            res.moveToFirst();
+            return (int) DatabaseUtils.queryNumEntries(db, DATA_STEMMING_TABLE_NAME);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -632,6 +669,8 @@ public class DBHelper extends SQLiteOpenHelper {
         return 0;
     }
 
+
+
     public Cursor getAllDataIndex() {
         SQLiteDatabase db = this.getReadableDatabase();
         try {
@@ -676,4 +715,66 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         return false;
     }
+
+    // VEKTOR
+
+    public boolean clearTbVektor() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        try {
+            db.delete(DATA_VEKTOR_TABLE_NAME, null,null);
+            db.execSQL("DELETE FROM SQLITE_SEQUENCE WHERE NAME = '" + DATA_VEKTOR_TABLE_NAME + "'"); //reset auto increment
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return false;
+    }
+
+    /*public Cursor getAllDataVektor() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery("SELECT DISTINCT " + DATA_COLUMN_IDKONTEN + " FROM " + DATA_INDEX_TABLE_NAME , null);
+            return res;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //db.close();
+        }
+        return null;
+    }*/
+
+    public Cursor getBobotFromIndex(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery("SELECT " + DATA_COLUMN_BOBOT + " FROM " + DATA_INDEX_TABLE_NAME + " WHERE " + DATA_COLUMN_IDKONTEN + " = " + id , null);
+            return res;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //db.close();
+        }
+        return null;
+    }
+
+
+    public boolean addTbVektor(int id, double panjangvektor) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = null;
+        try {
+            contentValues = new ContentValues();
+            contentValues.put(DATA_COLUMN_IDKONTEN, id);
+            contentValues.put(DATA_COLUMN_PANJANGVEKTOR, panjangvektor);
+            db.insert(DATA_VEKTOR_TABLE_NAME, null, contentValues);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+
 }

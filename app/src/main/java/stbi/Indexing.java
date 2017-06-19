@@ -32,7 +32,7 @@ public class Indexing extends AsyncTask<Void, String, Void> {
     private final String TAG_LOG_D = "Indexing";
 
     String[] term_split, term_split_temp;
-    int countTerm = 0, counterLoadingBar = 0, countTotalWordToIndex = 0, index_count;
+    int countTerm = 0, counterLoadingBar = 0, countTotalWordToIndex = 0, index_count, sizestem;
     long startTime, endTime;
 
     StringBuilder builder = new StringBuilder();
@@ -103,7 +103,9 @@ public class Indexing extends AsyncTask<Void, String, Void> {
             }
         }
 
-        loadingBar.setMax(countTotalWordToIndex);
+        sizestem = db.getSizeDataStemming();
+
+        loadingBar.setMax(sizestem);
         loadingBar.setVisibility(View.VISIBLE);
 
         mainView.setVisibility(View.GONE);
@@ -120,6 +122,13 @@ public class Indexing extends AsyncTask<Void, String, Void> {
         term_temp.clear();
 
         if (rs2.moveToFirst()) {
+            progressHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    loadingBar.setProgress(counterLoadingBar);
+                    tvInfo.setText("Current Progress = Indexing | " + counterLoadingBar + " / " + sizestem + " dokumen");
+                }
+            });
             while (rs2.isAfterLast() == false) {
                 str_content = rs2.getString(rs2.getColumnIndex(DBHelper.DATA_COLUMN_KONTEN));
                 str_id = rs2.getString(rs2.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN));
@@ -162,16 +171,18 @@ public class Indexing extends AsyncTask<Void, String, Void> {
                         }
                     }
 
-                    counterLoadingBar++;
-                    progressHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            loadingBar.setProgress(counterLoadingBar);
-                            tvInfo.setText("Current Progress = Indexing | " + counterLoadingBar + " / " + countTotalWordToIndex);
-                        }
-                    });
+
 
                 }
+
+                counterLoadingBar++;
+                progressHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadingBar.setProgress(counterLoadingBar);
+                        tvInfo.setText("Current Progress = Indexing | " + counterLoadingBar + " / " + sizestem + " dokumen");
+                    }
+                });
                 rs2.moveToNext();
             }
         }
