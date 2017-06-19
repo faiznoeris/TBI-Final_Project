@@ -40,6 +40,7 @@ import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
 import background_task.JSONParsing;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.MainActivity;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.R;
+import stbi.Bobot;
 import stbi.Indexing;
 import stbi.Stemming;
 import stbi.Stoplist;
@@ -274,8 +275,19 @@ public class FragmentShowData extends Fragment {
             AlertDialog diaBox = dialogStoplist();
             diaBox.show();
         } else if (id == R.id.action_index){
-            Indexing indexing = new Indexing(getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
-            indexing.execute();
+            if(!db.isTBDataStemmingEmpty()) {
+                Indexing indexing = new Indexing(getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
+                indexing.execute();
+            }else{
+                Toast.makeText(getContext(), "Data stemming masih kosong!", Toast.LENGTH_SHORT).show();
+            }
+        } else if(id == R.id.action_bobot){
+            if(!db.isTBDataIndexEmpty()) {
+                Bobot bobot = new Bobot(getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
+                bobot.execute();
+            }else{
+                Toast.makeText(getContext(), "Data stemming masih kosong!", Toast.LENGTH_SHORT).show();
+            }
         }
         return super.onOptionsItemSelected(item);
     }

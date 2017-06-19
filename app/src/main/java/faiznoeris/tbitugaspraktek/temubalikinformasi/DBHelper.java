@@ -3,6 +3,7 @@ package faiznoeris.tbitugaspraktek.temubalikinformasi;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -29,7 +30,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private final Context dbContext;
     //context.getApplicationInfo().dataDir + "/databases/"
 
-    private static final String DATABASE_NAME = "TBI-withindex.db";
+    private static final String DATABASE_NAME = "TBI-withdatautama.db";
     private static final String KATADASAR_TABLE_NAME = "tb_katadasar";
     private static final String KATADASAR_COLUMN_ID = "id";
     private static final String KATADASAR_COLUMN_KATADASAR = "katadasar";
@@ -39,7 +40,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String DATA_UTAMA_TABLE_NAME = "tb_data_utama";
     private static final String DATA_INDEX_TABLE_NAME = "tb_index";
 
-    private static final String DATA_COLUMN_ID = "id";
+    public static final String DATA_COLUMN_ID = "id";
     public static final String DATA_COLUMN_IDKONTEN = "idkonten";
     public static final String DATA_COLUMN_KONTEN = "konten";
     public static final String DATA_COLUMN_JUDUL = "judul";
@@ -53,6 +54,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String QUERY_CHECK_TB_DATAUTAMA_SIZE = "SELECT COUNT(*) FROM " + DATA_UTAMA_TABLE_NAME;
     private static final String QUERY_CHECK_TB_DATASTOPLIST_SIZE = "SELECT COUNT(*) FROM " + DATA_STOPLIST_TABLE_NAME;
     private static final String QUERY_CHECK_TB_DATASTEMMING_SIZE = "SELECT COUNT(*) FROM " + DATA_STEMMING_TABLE_NAME;
+    private static final String QUERY_CHECK_TB_DATAINDEX_SIZE = "SELECT COUNT(*) FROM " + DATA_INDEX_TABLE_NAME;
 
     private static final String QUERY_GET_ALL_DATA_UTAMA = "select * from " + DATA_UTAMA_TABLE_NAME;
     private static final String QUERY_GET_ALL_DATA_STOPLIST = "SELECT * FROM " + DATA_STOPLIST_TABLE_NAME;
@@ -240,6 +242,25 @@ public class DBHelper extends SQLiteOpenHelper {
         Cursor res = null;
         try {
             res = db.rawQuery(QUERY_CHECK_TB_DATASTEMMING_SIZE, null);
+            res.moveToFirst();
+            int count = res.getInt(0);
+            if (count > 0) {
+                res.close();
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+
+    public boolean isTBDataIndexEmpty() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery(QUERY_CHECK_TB_DATAINDEX_SIZE, null);
             res.moveToFirst();
             int count = res.getInt(0);
             if (count > 0) {
@@ -531,12 +552,11 @@ public class DBHelper extends SQLiteOpenHelper {
 
     //  INDEXING
 
-    public int getCountIndex(String term, String id) {
+    public int getCountIndex(String term, String idkonten) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor res;
         try {
-            res = db.rawQuery("SELECT count_index FROM " + DATA_INDEX_TABLE_NAME + " WHERE " + DATA_COLUMN_TERM + " = '" + term + "' AND "
-                    + DATA_COLUMN_IDKONTEN + " = " + Integer.parseInt(id), null);
+            res = db.rawQuery("SELECT count_index FROM " + DATA_INDEX_TABLE_NAME + " WHERE " + DATA_COLUMN_IDKONTEN + " = " + idkonten + " AND " + DATA_COLUMN_TERM + " = '" + term + "'", null);
             res.moveToFirst();
             if(res.getCount() > 0) {
                 return res.getInt(res.getColumnIndex(DATA_COLUMN_COUNTINDEX));
@@ -547,12 +567,12 @@ public class DBHelper extends SQLiteOpenHelper {
         return 0;
     }
 
-    public boolean updateTbIndex_Indexing(String idkonten, int count, String term) {
+    public boolean updateTbIndex_Indexing(int count, String term, String idkonten) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         try {
             contentValues.put(DATA_COLUMN_COUNTINDEX, count);
-            db.update(DATA_INDEX_TABLE_NAME, contentValues, DATA_COLUMN_IDKONTEN + " = " + Integer.parseInt(idkonten) + " AND " + DATA_COLUMN_TERM + " = '" + term + "'", null);
+            db.update(DATA_INDEX_TABLE_NAME, contentValues, DATA_COLUMN_IDKONTEN + " = " + idkonten + " AND " + DATA_COLUMN_TERM + " = '" + term + "'", null);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -562,7 +582,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return false;
     }
 
-    public boolean addTbIndex_Indexing(String idkonten, String term) {
+    public boolean addTbIndex_Indexing(String term, String idkonten) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = null;
         try {
@@ -580,16 +600,79 @@ public class DBHelper extends SQLiteOpenHelper {
         return true;
     }
 
-    public boolean truncateTbIndexing() {
+    public boolean clearTbIndexing() {
         SQLiteDatabase db = this.getWritableDatabase();
-        Cursor res;
         try {
-            res = db.rawQuery("TRUNCATE TABLE " + DATA_INDEX_TABLE_NAME, null);
+            db.delete(DATA_INDEX_TABLE_NAME, null,null);
+            db.execSQL("DELETE FROM SQLITE_SEQUENCE WHERE NAME = '" + DATA_INDEX_TABLE_NAME + "'"); //reset auto increment
             return true;
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             db.close();
+        }
+        return false;
+    }
+
+
+    // BOBOT
+
+    public int getTotalDataIndex() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery("SELECT DISTINCT " + DATA_COLUMN_IDKONTEN + " FROM " + DATA_INDEX_TABLE_NAME , null);
+            res.moveToFirst();
+            return (int) DatabaseUtils.queryNumEntries(db, DATA_INDEX_TABLE_NAME);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return 0;
+    }
+
+    public Cursor getAllDataIndex() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        try {
+            Cursor res = db.rawQuery("SELECT * FROM " + DATA_INDEX_TABLE_NAME + " ORDER BY " + DATA_COLUMN_ID, null);
+            return res;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+
+    public int getWordFreq(String term) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery("SELECT Count(*) as N FROM " + DATA_INDEX_TABLE_NAME + " WHERE " + DATA_COLUMN_TERM + " = '" + term + "'" , null);
+            res.moveToFirst();
+            if(res.getCount() > 0) {
+                return res.getInt(res.getColumnIndex("N"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return 0;
+    }
+
+    public boolean updateTbIndex_Bobot(double bobot, int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        try {
+            contentValues.put(DATA_COLUMN_BOBOT, bobot);
+            db.update(DATA_INDEX_TABLE_NAME, contentValues, DATA_COLUMN_ID + " = " + id, null);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //db.close();
         }
         return false;
     }
