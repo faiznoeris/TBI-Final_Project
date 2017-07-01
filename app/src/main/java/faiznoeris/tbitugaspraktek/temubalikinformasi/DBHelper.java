@@ -30,7 +30,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private final Context dbContext;
     //context.getApplicationInfo().dataDir + "/databases/"
 
-    private static final String DATABASE_NAME = "TBI-withdatastoplist(last).db";
+    private static final String DATABASE_NAME = "TBI-withcache(last).db";
     private static final String KATADASAR_TABLE_NAME = "tb_katadasar";
     private static final String KATADASAR_COLUMN_ID = "id";
     private static final String KATADASAR_COLUMN_KATADASAR = "katadasar";
@@ -40,6 +40,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String DATA_UTAMA_TABLE_NAME = "tb_data_utama";
     private static final String DATA_INDEX_TABLE_NAME = "tb_index";
     private static final String DATA_VEKTOR_TABLE_NAME = "tb_vektor";
+    private static final String DATA_CACHE_TABLE_NAME = "tb_cache";
 
     public static final String DATA_COLUMN_ID = "id";
     public static final String DATA_COLUMN_IDKONTEN = "idkonten";
@@ -51,6 +52,8 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String DATA_COLUMN_TERM = "term";
     public static final String DATA_COLUMN_BOBOT = "bobot";
     public static final String DATA_COLUMN_PANJANGVEKTOR = "panjang";
+    public static final String DATA_COLUMN_SIMILIARITY = "similiarity";
+    public static final String DATA_COLUMN_QUERY = "query";
 
     private static final String QUERY_CHECK_TB_KATADASAR_SIZE = "SELECT COUNT(*) FROM " + KATADASAR_TABLE_NAME;
     private static final String QUERY_CHECK_TB_DATAUTAMA_SIZE = "SELECT COUNT(*) FROM " + DATA_UTAMA_TABLE_NAME;
@@ -62,6 +65,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String QUERY_GET_ALL_DATA_UTAMA = "select * from " + DATA_UTAMA_TABLE_NAME;
     private static final String QUERY_GET_ALL_DATA_STOPLIST = "SELECT * FROM " + DATA_STOPLIST_TABLE_NAME;
     private static final String QUERY_GET_ALL_DATA_STEMMING = "SELECT * FROM " + DATA_STEMMING_TABLE_NAME;
+    private static final String QUERY_GET_ALL_DATA_VEKTOR = "SELECT * FROM " + DATA_VEKTOR_TABLE_NAME;
 
 /*
     private String QUERY_CHECK_KATADASAR = "SELECT * FROM " + KATADASAR_TABLE_NAME + " WHERE " + KATADASAR_COLUMN_KATADASAR + "='" + cek_kata + "'";
@@ -472,6 +476,21 @@ public class DBHelper extends SQLiteOpenHelper {
         return 0;
     }
 
+    public int getSizeDataVektor() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery(QUERY_GET_ALL_DATA_VEKTOR, null);
+            res.moveToFirst();
+            return (int) DatabaseUtils.queryNumEntries(db, DATA_STEMMING_TABLE_NAME);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return 0;
+    }
+
 //  ADDING DATA
 
 
@@ -690,9 +709,9 @@ public class DBHelper extends SQLiteOpenHelper {
         try {
             res = db.rawQuery("SELECT Count(*) as N FROM " + DATA_INDEX_TABLE_NAME + " WHERE " + DATA_COLUMN_TERM + " = '" + term + "'" , null);
             res.moveToFirst();
-            if(res.getCount() > 0) {
+            //if(res.getCount() > 0) {
                 return res.getInt(res.getColumnIndex("N"));
-            }
+            //}
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -732,11 +751,11 @@ public class DBHelper extends SQLiteOpenHelper {
         return false;
     }
 
-    /*public Cursor getAllDataVektor() {
+    public Cursor getAllDataVektor() {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor res = null;
         try {
-            res = db.rawQuery("SELECT DISTINCT " + DATA_COLUMN_IDKONTEN + " FROM " + DATA_INDEX_TABLE_NAME , null);
+            res = db.rawQuery("SELECT * FROM "+DATA_VEKTOR_TABLE_NAME+" ORDER BY "+ DATA_COLUMN_IDKONTEN, null);
             return res;
         } catch (Exception e) {
             e.printStackTrace();
@@ -744,7 +763,7 @@ public class DBHelper extends SQLiteOpenHelper {
             //db.close();
         }
         return null;
-    }*/
+    }
 
     public Cursor getBobotFromIndex(int id) {
         SQLiteDatabase db = this.getReadableDatabase();
@@ -775,6 +794,110 @@ public class DBHelper extends SQLiteOpenHelper {
             db.close();
         }
         return true;
+    }
+
+    //HITUNG SIMILIRAITY
+
+    public int countQueryInIndex(String query) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery("SELECT Count(*) as N from " + DATA_INDEX_TABLE_NAME + " WHERE " + DATA_COLUMN_TERM + " = '" + query + "'", null);
+            res.moveToFirst();
+            //if(res.getCount() > 0) {
+                return res.getInt(res.getColumnIndex("N"));
+            //}
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return 0;
+    }
+
+    public Cursor getKontenFromIndex(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery("SELECT * FROM "+DATA_INDEX_TABLE_NAME+" WHERE "+DATA_COLUMN_IDKONTEN+" = " + id, null);
+            return res;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //db.close();
+        }
+        return null;
+    }
+
+    public boolean addTbVektor(String query, int id, double sim) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = null;
+        try {
+            contentValues = new ContentValues();
+            if(sim != 0) {
+                contentValues.put(DATA_COLUMN_IDKONTEN, id);
+                contentValues.put(DATA_COLUMN_QUERY, query);
+                contentValues.put(DATA_COLUMN_SIMILIARITY, sim);
+            }else{
+                contentValues.put(DATA_COLUMN_IDKONTEN, id);
+                contentValues.put(DATA_COLUMN_QUERY, "0");
+                contentValues.put(DATA_COLUMN_SIMILIARITY, 0);
+            }
+            db.insert(DATA_CACHE_TABLE_NAME, null, contentValues);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+
+
+    //AMBIOL CACHE
+
+    public Cursor getCache(String query) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery("SELECT * FROM "+DATA_CACHE_TABLE_NAME+" WHERE "+DATA_COLUMN_QUERY+" = '"+query+"' ORDER BY "+DATA_COLUMN_SIMILIARITY+" DESC", null);
+            return res;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //db.close();
+        }
+        return null;
+    }
+
+    public int isQueryFoundInCache(String query) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery("SELECT Count(*) as N FROM "+DATA_CACHE_TABLE_NAME+" WHERE "+DATA_COLUMN_QUERY+" = '"+query+"' ORDER BY "+DATA_COLUMN_SIMILIARITY+" DESC", null);
+            res.moveToFirst();
+            //if(res.getCount() > 0) {
+            return res.getInt(res.getColumnIndex("N"));
+            //}
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return 0;
+    }
+
+    public Cursor getKonten(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery("SELECT * FROM "+DATA_UTAMA_TABLE_NAME+" WHERE "+DATA_COLUMN_IDKONTEN+" = "  + id, null);
+            return res;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //db.close();
+        }
+        return null;
     }
 
 }

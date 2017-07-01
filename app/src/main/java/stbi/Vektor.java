@@ -107,6 +107,7 @@ public class Vektor extends AsyncTask<Void, String, Void> {
 
                         rs2.moveToNext();
                     }
+                    rs2.close();
                 }
 
                 panjangvektor = Math.sqrt(panjangvektor);
@@ -136,6 +137,7 @@ public class Vektor extends AsyncTask<Void, String, Void> {
 
                 rs.moveToNext();
             }
+            rs.close();
         }
         return null;
     }

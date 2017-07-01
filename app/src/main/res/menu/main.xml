@@ -45,14 +45,14 @@
         android:title="Hitung panjang vektor"
         app:showAsAction="never" />
     <item
-        android:id="@+id/action_showvektor"
-        android:orderInCategory="100"
-        android:title="Show vektor"
-        app:showAsAction="never" />
-    <item
         android:id="@+id/action_showindex"
         android:orderInCategory="100"
         android:title="Show index"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_showvektor"
+        android:orderInCategory="100"
+        android:title="Show vektor"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_about"

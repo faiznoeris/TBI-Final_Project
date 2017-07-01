@@ -1,6 +1,8 @@
 package fragment;
 
+import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -34,6 +36,7 @@ import java.util.Map;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.MainActivity;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.R;
+import stbi.AmbilCache;
 
 /**
  * Created by Vellfire on 31/05/2017.
@@ -70,87 +73,8 @@ public class FragmentSearchData extends Fragment {
         search.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                data.clear();
-                Value = keyword.getText().toString();
-                if (Value.equals("")) {
-                    Toast.makeText(getContext(), "Keyword kosong!", Toast.LENGTH_SHORT).show();
-                } else {
-                    Cursor rs = db.getDataSearch(Value);
-                    if (rs.moveToFirst()) {
-                        while (rs.isAfterLast() == false) {
-                            map = new HashMap<>(2);
-                            id = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN));
-                            Log.d("SearchData", "Hasil Search, ID = " + id + " | Value Keyword - " + Value);
-                            konten = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_KONTEN));
-                            judul = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_JUDUL));
-
-                            String replaced_by_this = WordUtils.capitalize(Value);
-
-                            splitKeyword = konten.split(" ");
-
-                            konten = konten.replaceAll("(?i)"+Value, "<b>" + replaced_by_this + "</b>");
-                            konten = konten.replace("\n", "<p></p>");
-
-                            countKeyword=0;
-
-                            for(int i = 0; i < splitKeyword.length; i++){
-                                if(StringUtils.containsIgnoreCase(splitKeyword[i], Value)){
-                                    countKeyword++;
-                                    Log.d("SearchData", "Found keyword - " + splitKeyword[i]);
-                                }
-                            }
-
-                            map.put("id", id);
-                            map.put("content", konten);
-                            map.put("title", judul);
-                            map.put("countkeyword", String.valueOf(countKeyword));
-                            data.add(map);
-                            rs.moveToNext();
-                        }
-
-                        //sorting most countkeyword
-                        Collections.sort(data, new Comparator<Map<String, String>>() {
-                            @Override
-                            public int compare(Map<String, String> o1, Map<String, String> o2) {
-                                int val1 = Integer.parseInt(o1.get("countkeyword"));
-                                int val2 = Integer.parseInt(o2.get("countkeyword"));
-                                return val1 > val2 ? -1 : (val1 < val2) ? 1 : 0;
-                            }
-                        });
-
-
-
-                        trHeader.setVisibility(View.VISIBLE);
-                        listData.setVisibility(View.VISIBLE);
-
-                        SimpleAdapter adapter = new SimpleAdapter(getContext(), data,
-                                R.layout.listview_row,
-                                new String[]{"id", "content", "title"},
-                                new int[]{R.id.tvId,
-                                        R.id.tvJudul});
-
-                        SimpleAdapter.ViewBinder binder = new SimpleAdapter.ViewBinder() {
-                            @Override
-                            public boolean setViewValue(View view, Object object, String value) {
-                                if (view instanceof TextView) {
-                                    ((TextView) view).setText(Html.fromHtml(value));
-                                    return true;
-                                }
-
-                                return false;
-                            }
-                        };
-                        adapter.setViewBinder(binder);
-                        listData.setAdapter(adapter);
-                    } else {
-                        Toast.makeText(getContext(), "Data tidak ditemukan!", Toast.LENGTH_SHORT).show();
-                    }
-
-
-                    if (!rs.isClosed()) {
-                        rs.close();
-                    }
-                }
+                AmbilCache ambilCache = new AmbilCache(getContext(), FragmentSearchData.this);
+                ambilCache.execute(keyword.getText().toString());
             }
         });
 
@@ -158,15 +82,39 @@ public class FragmentSearchData extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 HashMap<String,String> map =(HashMap<String,String>)listData.getItemAtPosition(position);
-                String id_click = map.get("title");
-                String cKey = map.get("countkeyword");
-                Toast.makeText(getContext(), "Judul: " + id_click + " || Jumlah keyword muncul: " + cKey, Toast.LENGTH_SHORT).show();
+                //String id_click = map.get("title");
+                //String cKey = map.get("countkeyword");
+                String link = map.get("link");
+               // Toast.makeText(getContext(), "Judul: " + id_click + " || Jumlah keyword muncul: " + cKey, Toast.LENGTH_SHORT).show();
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+                startActivity(browserIntent);
+
+                Toast.makeText(getContext(), link + " | " + map.get("title"), Toast.LENGTH_SHORT).show();
             }
         });
 
         ((MainActivity) getActivity()).setActionBarTitle("STBI");
 
         return rootView;
+    }
+
+    public void setData(List<Map<String, String>> data) {
+
+        this.data = data;
+
+        SimpleAdapter adapter = new SimpleAdapter(getContext(), data,
+                R.layout.listview_row,
+                new String[]{"id", "content", "title", "link"},
+                new int[]{R.id.tvId,
+                        R.id.tvJudul});
+        trHeader.setVisibility(View.VISIBLE);
+        listData.setVisibility(View.VISIBLE);
+        listData.setAdapter(adapter);
+        //Toast.makeText(getContext(), "NEW: " + this.data.toString(), Toast.LENGTH_SHORT).show();
+    }
+
+    public void setAdapter(SimpleAdapter adapter) {
+        listData.setAdapter(adapter);
     }
 
     @Override

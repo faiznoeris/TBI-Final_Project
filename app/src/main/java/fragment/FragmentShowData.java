@@ -299,7 +299,24 @@ public class FragmentShowData extends Fragment {
             }else{
                 Toast.makeText(getContext(), "Data index masih kosong!", Toast.LENGTH_SHORT).show();
             }
+        }else if(id == R.id.action_showindex){
+            if(!db.isTBDataIndexEmpty()) {
+                FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
+                ft.replace(R.id.mainFrame, new FragmentShowBobot());
+                ft.commit();
+            }else{
+                Toast.makeText(getContext(), "Data index masih kosong!", Toast.LENGTH_SHORT).show();
+            }
+        }else if(id == R.id.action_showvektor){
+            if(!db.isTBDataVektorEmpty()) {
+                FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
+                ft.replace(R.id.mainFrame, new FragmentShowVektor());
+                ft.commit();
+            }else{
+                Toast.makeText(getContext(), "Data vektor masih kosong!", Toast.LENGTH_SHORT).show();
+            }
         }
+
         return super.onOptionsItemSelected(item);
     }
 
