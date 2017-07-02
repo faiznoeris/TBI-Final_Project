@@ -315,6 +315,21 @@ public class FragmentShowData extends Fragment {
             }else{
                 Toast.makeText(getContext(), "Data vektor masih kosong!", Toast.LENGTH_SHORT).show();
             }
+        }else if(id == R.id.action_showcache){
+            if(!db.isTBDataCacheEmpty()) {
+                FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
+                ft.replace(R.id.mainFrame, new FragmentShowCache());
+                ft.commit();
+            }else{
+                Toast.makeText(getContext(), "Data cache masih kosong!", Toast.LENGTH_SHORT).show();
+            }
+        }else if(id == R.id.action_clearcache){
+            if(!db.isTBDataCacheEmpty()) {
+                AlertDialog diaBox = dialogClearCache();
+                diaBox.show();
+            }else{
+                Toast.makeText(getContext(), "Data cache masih kosong!", Toast.LENGTH_SHORT).show();
+            }
         }
 
         return super.onOptionsItemSelected(item);
@@ -355,6 +370,25 @@ public class FragmentShowData extends Fragment {
                             Toast.makeText(getContext(), "Data sudah terisi.", Toast.LENGTH_SHORT).show();
                         }
 
+                    }
+                })
+                .create();
+        return myQuittingDialogBox;
+    }
+
+    private AlertDialog dialogClearCache() {
+        AlertDialog myQuittingDialogBox = new AlertDialog.Builder(getContext())
+                .setTitle("Clear Table Cache")
+                .setMessage("Clear table cache sekarang?")
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        db.clearTbCache();
+                        Toast.makeText(getContext(), "Table cache berhasil diclear.", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .create();

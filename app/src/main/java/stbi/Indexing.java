@@ -67,41 +67,6 @@ public class Indexing extends AsyncTask<Void, String, Void> {
 
         db = new DBHelper(context);
         db.clearTbIndexing();
-        Cursor rs = db.getAllDataStemming();
-
-        if (rs.moveToFirst()) {
-            while (rs.isAfterLast() == false) {
-                str_content = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_KONTEN));
-
-                term_split = str_content.split(" ");
-
-                for (int i = 0; i < term_split.length; i++) {
-                    if (term_split[i] != "") {
-                        term_split[i].replace("\n", "");
-                        term_split[i].replace("'", "");
-                        term_split[i].replace("-", "");
-                        term_split[i].replace("=", "");
-                        term_split[i].replace(".", "");
-                        term_split[i].replace(",", "");
-                        term_split[i].replace(":", "");
-                        term_split[i].replace(";", "");
-                        term_split[i].replace("!", "");
-                        term_split[i].replace("\\?", "");
-                        term_split[i].replace("\\)", "");
-                        term_split[i].replace("\\(", "");
-                        term_split[i].replace("\\\\", "");
-                        term_split[i].replace("\\/", "");
-                        term_split[i].replace("[^a-zA-Z ]", "");
-
-                    }
-                    term_temp.add(term_split[i].toLowerCase());
-                }
-                for (int j = 0; j < term_temp.size(); j++) {
-                    countTotalWordToIndex++;
-                }
-                rs.moveToNext();
-            }
-        }
 
         sizestem = db.getSizeDataStemming();
 
@@ -118,10 +83,10 @@ public class Indexing extends AsyncTask<Void, String, Void> {
     protected Void doInBackground(Void... params) {
         db = new DBHelper(context);
         db.clearTbIndexing();
-        Cursor rs2 = db.getAllDataStemming();
-        term_temp.clear();
+        Cursor rs = db.getAllDataStemming();
 
-        if (rs2.moveToFirst()) {
+
+        if (rs.moveToFirst()) {
             progressHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -129,39 +94,34 @@ public class Indexing extends AsyncTask<Void, String, Void> {
                     tvInfo.setText("Current Progress = Indexing | " + counterLoadingBar + " / " + sizestem + " dokumen");
                 }
             });
-            while (rs2.isAfterLast() == false) {
-                str_content = rs2.getString(rs2.getColumnIndex(DBHelper.DATA_COLUMN_KONTEN));
-                str_id = rs2.getString(rs2.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN));
+            while (rs.isAfterLast() == false) {
+                str_id = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN));
+                str_content = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_KONTEN));
 
                 term_split = str_content.split(" ");
 
+
                 for (int i = 0; i < term_split.length; i++) {
-                    if (term_split[i] != "") {
-                        term_split[i].replace("\n", "");
-                        term_split[i].replace("'", "");
-                        term_split[i].replace("-", "");
-                        term_split[i].replace("=", "");
-                        term_split[i].replace(".", "");
-                        term_split[i].replace(",", "");
-                        term_split[i].replace(":", "");
-                        term_split[i].replace(";", "");
-                        term_split[i].replace("!", "");
-                        term_split[i].replace("\\?", "");
-                        term_split[i].replace("\\)", "");
-                        term_split[i].replace("\\(", "");
-                        term_split[i].replace("\\\\", "");
-                        term_split[i].replace("\\/", "");
-                        term_split[i].replace("[^a-zA-Z ]", "");
+                    //Log.d(TAG_LOG_D, "TERM BEFORE REMOVING: " + term_split[i]);
+                    if (!term_split[i].isEmpty() && term_split[i].matches(".*\\w+.*")) {
+                        term_split[i] = term_split[i].replaceAll("\\d+", "");
+                        term_split[i] = term_split[i].replaceAll("\\s+", "");
+                        term_split[i] = term_split[i].replaceAll("\\W+", "");
+
+                        //Log.d(TAG_LOG_D, "TERM AFTER REMOVING: " + term_split[i]);
+                        if(term_split[i].matches(".*\\d+.*") && !term_split[i].matches(".*\\w+.*")){
+                            //
+                        }else{
+                            //Log.d(TAG_LOG_D, "TERM ADDED TO MAP " + term_split[i].toLowerCase());
+                            term_temp.add(term_split[i].toLowerCase());
+                        }
                     }
 
-                    //if (!term_temp.contains(term_split[i].toLowerCase())) {
-                        term_temp.add(term_split[i].toLowerCase());
-                    //}
-
                 }
+
                 for (int j = 0; j < term_temp.size(); j++) {
                     index_count = db.getCountIndex(term_temp.get(j), str_id);
-                    Log.d(TAG_LOG_D, term_temp.get(j) + " | INDEX COUNT: " + index_count + " | ID: " + str_id);
+                    Log.d(TAG_LOG_D, "TERM: " + term_temp.get(j) + " | INDEX COUNT: " + index_count + " | ID: " + str_id);
                     if (index_count > 0) {
                         index_count++;
                         if (db.updateTbIndex_Indexing(index_count, term_temp.get(j), str_id)) {
@@ -170,9 +130,6 @@ public class Indexing extends AsyncTask<Void, String, Void> {
                         if (db.addTbIndex_Indexing(term_temp.get(j), str_id)) {
                         }
                     }
-
-
-
                 }
 
                 counterLoadingBar++;
@@ -183,7 +140,9 @@ public class Indexing extends AsyncTask<Void, String, Void> {
                         tvInfo.setText("Current Progress = Indexing | " + counterLoadingBar + " / " + sizestem + " dokumen");
                     }
                 });
-                rs2.moveToNext();
+
+                term_temp.clear();
+                rs.moveToNext();
             }
         }
         return null;

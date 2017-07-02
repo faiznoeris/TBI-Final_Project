@@ -26,10 +26,10 @@ public class HitungSimiliarity{
 
     String[] query_split;
     //double[] bobotQuery;
-    int countTerm = 0, counterLoadingBar = 0, countTotalWordToIndex = 0, index_count, Nterm, id, n, sizestem, jumlahmirip, dotproduct;
+    int countTerm = 0, counterLoadingBar = 0, countTotalWordToIndex = 0, index_count, id, sizestem, jumlahmirip;
     long startTime, endTime;
 
-    double bobot, panjangQuery, idf, panjang, similiarity;
+    double bobot, panjangQuery, idf, panjang, similiarity,  Nterm, n, dotproduct;
 
     StringBuilder builder = new StringBuilder();
     String str_id, str_term, str_count, str_removedword, query;
@@ -104,7 +104,7 @@ public class HitungSimiliarity{
                 }
 
                 Log.d(TAG_LOG_D, "DOTPRODUCT: " + dotproduct);
-                if(dotproduct > 0){
+                if(dotproduct > 0.0){
                     similiarity = dotproduct / (panjangQuery * panjang);
 
                     if(db.addTbVektor(query, id, similiarity)){

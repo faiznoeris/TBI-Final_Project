@@ -54,6 +54,20 @@
         android:orderInCategory="100"
         android:title="Show vektor"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_showcache"
+        android:orderInCategory="100"
+        android:title="Show cache"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_clearcache"
+        android:orderInCategory="100"
+        android:title="Clear cache"
+        app:showAsAction="never" />
+
+
     <item
         android:id="@+id/action_about"
         android:orderInCategory="100"

@@ -11,6 +11,8 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.apache.commons.lang3.text.WordUtils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +48,8 @@ public class AmbilCache extends AsyncTask<String, Void, List<Map<String, String>
 
     FragmentSearchData fragmentSearchData;
     Context context;
+
+    int dataFound = 0;
 
     Map<String, String> map;
     List<Map<String, String>> data = new ArrayList<>();
@@ -97,12 +101,25 @@ public class AmbilCache extends AsyncTask<String, Void, List<Map<String, String>
 
                                 Log.d(TAG_LOG_D, "LINK: " + str_link + "ID: " + str_id);
 
+
+                                String splitParam[] = params[0].split(" ");
+
+                                for(int i = 0; i < splitParam.length; i++){
+                                    String replaced_by_this = WordUtils.capitalize(splitParam[i]);
+                                    str_konten = str_konten.replaceAll("(?i)"+splitParam[i], "<b>" + replaced_by_this + "</b>");
+                                    str_konten = str_konten.replace("\n", "<p></p>");
+                                    //Log.d(TAG_LOG_D, "splitparam: " + splitParam[i].toString());
+                                }
+
+
                                 map = new HashMap<>(2);
                                 map.put("id", str_id);
                                 map.put("content", str_konten);
                                 map.put("title", str_title);
                                 map.put("link", str_link);
                                 data.add(map);
+
+                                dataFound++;
 
                                 res2.moveToNext();
                             }
@@ -136,12 +153,19 @@ public class AmbilCache extends AsyncTask<String, Void, List<Map<String, String>
 
                                 Log.d(TAG_LOG_D, "LINK: " + str_link + "ID: " + str_id);
 
+                                String replaced_by_this = WordUtils.capitalize(params[0]);
+                                str_konten = str_konten.replaceAll("(?i)"+params[0], "<b>" + replaced_by_this + "</b>");
+                                str_konten = str_konten.replace("\n", "<p></p>");
+
+
                                 map = new HashMap<>(2);
                                 map.put("id", str_id);
                                 map.put("content", str_konten);
                                 map.put("title", str_title);
                                 map.put("link", str_link);
                                 data.add(map);
+
+                                dataFound++;
 
                                 res2.moveToNext();
                             }
@@ -166,7 +190,7 @@ public class AmbilCache extends AsyncTask<String, Void, List<Map<String, String>
         endTime = System.currentTimeMillis();
         Log.d(TAG_LOG_D, "Done, Time spent = " + (endTime - startTime) / 1000 + " seconds");
         ///Log.d(TAG_LOG_D, "Done, " + counterLoadingBar + " data dihitung .");
-        Toast.makeText(context, "Task done in " + (endTime-startTime)/1000 + " seconds", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, "Found " + dataFound + " data.", Toast.LENGTH_SHORT).show();
         /*loadingBar.setVisibility(View.GONE);
         tvInfo.setVisibility(View.GONE);
         mainView.setVisibility(View.VISIBLE);*/

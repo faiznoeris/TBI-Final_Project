@@ -73,8 +73,13 @@ public class FragmentSearchData extends Fragment {
         search.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                AmbilCache ambilCache = new AmbilCache(getContext(), FragmentSearchData.this);
-                ambilCache.execute(keyword.getText().toString());
+                Value = keyword.getText().toString();
+                if (Value.equals("")) {
+                    Toast.makeText(getContext(), "Keyword kosong!", Toast.LENGTH_SHORT).show();
+                }else {
+                    AmbilCache ambilCache = new AmbilCache(getContext(), FragmentSearchData.this);
+                    ambilCache.execute(keyword.getText().toString());
+                }
             }
         });
 
@@ -107,6 +112,22 @@ public class FragmentSearchData extends Fragment {
                 new String[]{"id", "content", "title", "link"},
                 new int[]{R.id.tvId,
                         R.id.tvJudul});
+
+        SimpleAdapter.ViewBinder binder = new SimpleAdapter.ViewBinder() {
+            @Override
+            public boolean setViewValue(View view, Object object, String value) {
+                if (view instanceof TextView) {
+                    ((TextView) view).setText(Html.fromHtml(value));
+                    return true;
+                }
+
+                return false;
+            }
+        };
+        adapter.setViewBinder(binder);
+
+
+
         trHeader.setVisibility(View.VISIBLE);
         listData.setVisibility(View.VISIBLE);
         listData.setAdapter(adapter);
@@ -147,6 +168,10 @@ public class FragmentSearchData extends Fragment {
         item10.setVisible(false);
         MenuItem item11 = menu.findItem(R.id.action_showvektor);
         item11.setVisible(false);
+        MenuItem item12 = menu.findItem(R.id.action_showcache);
+        item12.setVisible(false);
+        MenuItem item13 = menu.findItem(R.id.action_clearcache);
+        item13.setVisible(false);
     }
 
     @Override

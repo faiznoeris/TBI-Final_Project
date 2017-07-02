@@ -61,11 +61,14 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String QUERY_CHECK_TB_DATASTEMMING_SIZE = "SELECT COUNT(*) FROM " + DATA_STEMMING_TABLE_NAME;
     private static final String QUERY_CHECK_TB_DATAINDEX_SIZE = "SELECT COUNT(*) FROM " + DATA_INDEX_TABLE_NAME;
     private static final String QUERY_CHECK_TB_DATAVEKTOR_SIZE = "SELECT COUNT(*) FROM " + DATA_VEKTOR_TABLE_NAME;
+    private static final String QUERY_CHECK_TB_DATACACHE_SIZE = "SELECT COUNT(*) FROM " + DATA_CACHE_TABLE_NAME;
 
     private static final String QUERY_GET_ALL_DATA_UTAMA = "select * from " + DATA_UTAMA_TABLE_NAME;
     private static final String QUERY_GET_ALL_DATA_STOPLIST = "SELECT * FROM " + DATA_STOPLIST_TABLE_NAME;
     private static final String QUERY_GET_ALL_DATA_STEMMING = "SELECT * FROM " + DATA_STEMMING_TABLE_NAME;
     private static final String QUERY_GET_ALL_DATA_VEKTOR = "SELECT * FROM " + DATA_VEKTOR_TABLE_NAME;
+    private static final String QUERY_GET_ALL_DATA_INDEX = "SELECT * FROM " + DATA_INDEX_TABLE_NAME;
+    private static final String QUERY_GET_ALL_DATA_CACHE = "SELECT * FROM " + DATA_CACHE_TABLE_NAME;
 
 /*
     private String QUERY_CHECK_KATADASAR = "SELECT * FROM " + KATADASAR_TABLE_NAME + " WHERE " + KATADASAR_COLUMN_KATADASAR + "='" + cek_kata + "'";
@@ -301,6 +304,25 @@ public class DBHelper extends SQLiteOpenHelper {
         return true;
     }
 
+    public boolean isTBDataCacheEmpty() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery(QUERY_CHECK_TB_DATACACHE_SIZE, null);
+            res.moveToFirst();
+            int count = res.getInt(0);
+            if (count > 0) {
+                res.close();
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return true;
+    }
+
     public boolean isDataUtamaExist(String id) {
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor res = null;
@@ -446,6 +468,18 @@ public class DBHelper extends SQLiteOpenHelper {
         return null;
     }
 
+    public Cursor getAllDataCache() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        try {
+            Cursor res = db.rawQuery(QUERY_GET_ALL_DATA_CACHE, null);
+            return res;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
     public int getSizeDataUtama() {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor res = null;
@@ -460,6 +494,22 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         return 0;
     }
+
+    public int getSizeDataIndex() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = null;
+        try {
+            res = db.rawQuery(QUERY_GET_ALL_DATA_INDEX, null);
+            res.moveToFirst();
+            return res.getCount();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return 0;
+    }
+
 
     public int getSizeDataStemming() {
         SQLiteDatabase db = this.getReadableDatabase();
@@ -670,6 +720,20 @@ public class DBHelper extends SQLiteOpenHelper {
         return false;
     }
 
+    public boolean clearTbCache() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        try {
+            db.delete(DATA_CACHE_TABLE_NAME, null,null);
+            db.execSQL("DELETE FROM SQLITE_SEQUENCE WHERE NAME = '" + DATA_INDEX_TABLE_NAME + "'"); //reset auto increment
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return false;
+    }
+
 
     // BOBOT
 
@@ -677,9 +741,10 @@ public class DBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor res = null;
         try {
-            res = db.rawQuery("SELECT DISTINCT " + DATA_COLUMN_IDKONTEN + " FROM " + DATA_INDEX_TABLE_NAME , null);
+            res = db.rawQuery("SELECT COUNT(DISTINCT " + DATA_COLUMN_IDKONTEN + ") as N FROM " + DATA_INDEX_TABLE_NAME , null);
             res.moveToFirst();
-            return (int) DatabaseUtils.queryNumEntries(db, DATA_INDEX_TABLE_NAME);
+            //return (int) DatabaseUtils.queryNumEntries(db, DATA_INDEX_TABLE_NAME);
+            return res.getInt(res.getColumnIndex("N"));
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

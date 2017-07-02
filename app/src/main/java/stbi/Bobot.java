@@ -23,10 +23,10 @@ public class Bobot extends AsyncTask<Void, String, Void> {
     private final String TAG_LOG_D = "Bobot";
 
     String[] term_split, term_split_temp;
-    int countTerm = 0, counterLoadingBar = 0, countTotalWordToIndex = 0, index_count, Nterm, id, n;
+    int countTerm = 0, counterLoadingBar = 0, countTotalWordToIndex = 0, index_count,  id, loadingMax;
     long startTime, endTime;
 
-    double hasilbobot;
+    double hasilbobot, n, Nterm;
 
     StringBuilder builder = new StringBuilder();
     String str_id, str_term, str_count, str_removedword;
@@ -61,8 +61,9 @@ public class Bobot extends AsyncTask<Void, String, Void> {
 
         db = new DBHelper(context);
         n = db.getTotalDataIndex();
+        loadingMax = db.getSizeDataIndex();
 
-        loadingBar.setMax(n);
+        loadingBar.setMax(loadingMax);
         loadingBar.setVisibility(View.VISIBLE);
 
         mainView.setVisibility(View.GONE);
@@ -87,9 +88,9 @@ public class Bobot extends AsyncTask<Void, String, Void> {
                 index_count = rs.getInt(rs.getColumnIndex(DBHelper.DATA_COLUMN_COUNTINDEX));
                 Nterm = db.getWordFreq(str_term);
 
-                Log.d(TAG_LOG_D, "BEFORE COUNT: N: " + n + " | NTERM: " + Nterm + " | INDEX_COUNT: " + index_count + " | FOR TERM: " + str_term);
+                Log.d(TAG_LOG_D, "BEFORE COUNT: N: " + n + " | NTERM: " + Nterm + " | INDEX_COUNT: " + index_count + " | LOG: " +  String.valueOf(Math.log10((n/Nterm))) + " FOR TERM: " + str_term);
 
-                hasilbobot = index_count * Math.log((n / Nterm));
+                hasilbobot = index_count * Math.log10((n/Nterm));
 
                 if(db.updateTbIndex_Bobot(hasilbobot, id)){
                     Log.d(TAG_LOG_D, "TERM: " + str_term + " | BOBOT: " + hasilbobot);
@@ -100,7 +101,7 @@ public class Bobot extends AsyncTask<Void, String, Void> {
                     @Override
                     public void run() {
                         loadingBar.setProgress(counterLoadingBar);
-                        tvInfo.setText("Current Progress = Bobot | " + counterLoadingBar + " / " + n + " term");
+                        tvInfo.setText("Current Progress = Bobot | " + counterLoadingBar + " / " + loadingMax + " term");
                     }
                 });
 

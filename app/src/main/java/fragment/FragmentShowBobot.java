@@ -159,6 +159,10 @@ public class FragmentShowBobot extends Fragment {
         item10.setVisible(false);
         MenuItem item11 = menu.findItem(R.id.action_showvektor);
         item11.setVisible(false);
+        MenuItem item12 = menu.findItem(R.id.action_showcache);
+        item12.setVisible(false);
+        MenuItem item13 = menu.findItem(R.id.action_clearcache);
+        item13.setVisible(false);
 
 
     }
