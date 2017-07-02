@@ -135,33 +135,31 @@ public class Indexing extends AsyncTask<Void, String, Void> {
 
                 term_split = str_content.split(" ");
 
-                for (int i = 0; i < term_split.length; i++) {
-                    if (term_split[i] != "") {
-                        term_split[i].replace("\n", "");
-                        term_split[i].replace("'", "");
-                        term_split[i].replace("-", "");
-                        term_split[i].replace("=", "");
-                        term_split[i].replace(".", "");
-                        term_split[i].replace(",", "");
-                        term_split[i].replace(":", "");
-                        term_split[i].replace(";", "");
-                        term_split[i].replace("!", "");
-                        term_split[i].replace("\\?", "");
-                        term_split[i].replace("\\)", "");
-                        term_split[i].replace("\\(", "");
-                        term_split[i].replace("\\\\", "");
-                        term_split[i].replace("\\/", "");
-                        term_split[i].replace("[^a-zA-Z ]", "");
-                    }
 
+                for (int i = 0; i < term_split.length; i++) {
+                    Log.d(TAG_LOG_D, "TERM BEFORE REMOVING: " + term_split[i]);
+                    if (!term_split[i].isEmpty() && term_split[i].matches(".*\\w+.*")) {
+                        term_split[i] = term_split[i].replaceAll("\\d+", "");
+                        term_split[i] = term_split[i].replaceAll("\\s+", "");
+                        term_split[i] = term_split[i].replaceAll("\\W+", "");
+
+                        Log.d(TAG_LOG_D, "TERM AFTER REMOVING: " + term_split[i]);
+                        if(term_split[i].matches(".*\\d+.*") && !term_split[i].matches(".*\\w+.*")){
+                            //
+                        }else{
+                            Log.d(TAG_LOG_D, "TERM ADDED TO MAP " + term_split[i].toLowerCase());
+                            term_temp.add(term_split[i].toLowerCase());
+                        }
+                    }
+                    //Log.d(TAG_LOG_D, "TERM AFTER REMOVING: " + term_split[i]);
                     //if (!term_temp.contains(term_split[i].toLowerCase())) {
-                        term_temp.add(term_split[i].toLowerCase());
+                        //term_temp.add(term_split[i].toLowerCase());
                     //}
 
                 }
                 for (int j = 0; j < term_temp.size(); j++) {
                     index_count = db.getCountIndex(term_temp.get(j), str_id);
-                    Log.d(TAG_LOG_D, term_temp.get(j) + " | INDEX COUNT: " + index_count + " | ID: " + str_id);
+                    Log.d(TAG_LOG_D, "TERM: " + term_temp.get(j) + " | INDEX COUNT: " + index_count + " | ID: " + str_id);
                     if (index_count > 0) {
                         index_count++;
                         if (db.updateTbIndex_Indexing(index_count, term_temp.get(j), str_id)) {
