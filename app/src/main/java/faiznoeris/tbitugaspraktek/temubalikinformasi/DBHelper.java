@@ -365,7 +365,7 @@ public class DBHelper extends SQLiteOpenHelper {
         Cursor res = null;
         try {
             //this.id = id;
-            res = db.rawQuery("SELECT * FROM " + DATA_STEMMING_TABLE_NAME + " WHERE " + DATA_COLUMN_IDKONTEN + "=" + id + "", null);
+            res = db.rawQuery("SELECT * FROM " + DATA_STEMMING_TABLE_NAME + " WHERE " + DATA_COLUMN_IDKONTEN + "=" + id , null);
             if (res.moveToFirst()) {
                 res.close();
                 return true;
@@ -404,7 +404,7 @@ public class DBHelper extends SQLiteOpenHelper {
         Cursor res = null;
         try {
             //this.cek_kata = cek_kata;
-            res = db.rawQuery("SELECT * FROM " + KATADASAR_TABLE_NAME + " WHERE " + KATADASAR_COLUMN_KATADASAR + "='" + cek_kata + "'", null);
+            res = db.rawQuery("SELECT * FROM " + KATADASAR_TABLE_NAME + " WHERE " + KATADASAR_COLUMN_KATADASAR + " LIKE '%" + cek_kata + "%'", null);
             res.moveToFirst();
             int count = res.getCount();
             if (count > 0) {
@@ -682,8 +682,6 @@ public class DBHelper extends SQLiteOpenHelper {
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            //db.close();
         }
         return false;
     }
@@ -734,6 +732,34 @@ public class DBHelper extends SQLiteOpenHelper {
         return false;
     }
 
+    public boolean clearTbStem() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        try {
+            db.delete(DATA_STEMMING_TABLE_NAME, null,null);
+            db.execSQL("DELETE FROM SQLITE_SEQUENCE WHERE NAME = '" + DATA_STEMMING_TABLE_NAME + "'"); //reset auto increment
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return false;
+    }
+
+    public boolean clearTbStop() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        try {
+            db.delete(DATA_STOPLIST_TABLE_NAME, null,null);
+            db.execSQL("DELETE FROM SQLITE_SEQUENCE WHERE NAME = '" + DATA_STOPLIST_TABLE_NAME + "'"); //reset auto increment
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+        return false;
+    }
+
 
     // BOBOT
 
@@ -758,7 +784,9 @@ public class DBHelper extends SQLiteOpenHelper {
     public Cursor getAllDataIndex() {
         SQLiteDatabase db = this.getReadableDatabase();
         try {
-            Cursor res = db.rawQuery("SELECT * FROM " + DATA_INDEX_TABLE_NAME + " ORDER BY " + DATA_COLUMN_ID, null);
+            //Cursor res = db.rawQuery("SELECT * FROM " + DATA_INDEX_TABLE_NAME + " ORDER BY " + DATA_COLUMN_ID, null);
+
+            Cursor res = db.rawQuery(QUERY_GET_ALL_DATA_INDEX, null);
             return res;
         } catch (Exception e) {
             e.printStackTrace();
@@ -794,9 +822,9 @@ public class DBHelper extends SQLiteOpenHelper {
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
+        } /*finally {
             //db.close();
-        }
+        }*/
         return false;
     }
 

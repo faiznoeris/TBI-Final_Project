@@ -38,7 +38,7 @@ public class AmbilCache extends AsyncTask<String, Void, List<Map<String, String>
     double bobot, panjangQuery, idf, panjang, similiarity;
 
     StringBuilder builder = new StringBuilder();
-    String str_id, str_link, str_konten, str_title, query;
+    String str_id, str_link, str_konten, str_title, query, kword;
 
     DBHelper db;
 
@@ -79,6 +79,8 @@ public class AmbilCache extends AsyncTask<String, Void, List<Map<String, String>
 
     @Override
     protected List<Map<String, String>> doInBackground(String... params) {
+
+        kword = params[0];
 
         int size = db.isQueryFoundInCache(params[0]);
 
@@ -190,7 +192,7 @@ public class AmbilCache extends AsyncTask<String, Void, List<Map<String, String>
         endTime = System.currentTimeMillis();
         Log.d(TAG_LOG_D, "Done, Time spent = " + (endTime - startTime) / 1000 + " seconds");
         ///Log.d(TAG_LOG_D, "Done, " + counterLoadingBar + " data dihitung .");
-        Toast.makeText(context, "Found " + dataFound + " data.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, "Found " + dataFound + " data for keyword " + kword, Toast.LENGTH_SHORT).show();
         /*loadingBar.setVisibility(View.GONE);
         tvInfo.setVisibility(View.GONE);
         mainView.setVisibility(View.VISIBLE);*/

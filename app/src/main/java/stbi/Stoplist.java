@@ -10,6 +10,7 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Map;
 
 import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.R;
+import fragment.FragmentSearchData;
 import fragment.FragmentShowData;
 
 /**
@@ -33,7 +35,6 @@ public class Stoplist extends AsyncTask<Void, String, List<Map<String, String>>>
     String[] stoplisting;
     int countTotalWord = 0;
 
-
     DBHelper db;
 
     ProgressBar loadingBar;
@@ -41,6 +42,7 @@ public class Stoplist extends AsyncTask<Void, String, List<Map<String, String>>>
     TextView tvInfo;
 
     FragmentShowData fragmentShowData;
+    FragmentSearchData fragmentSearchData;
     Context context;
 
     Map<String, String> map;
@@ -54,18 +56,24 @@ public class Stoplist extends AsyncTask<Void, String, List<Map<String, String>>>
 
     private Handler progressHandler = new Handler();
 
-    public Stoplist(List<Map<String, String>> data, Context context, FragmentShowData fragmentShowData, ProgressBar loadingBar, View mainView, TextView tvInfo) {
+    public Stoplist(List<Map<String, String>> data, Context context, FragmentShowData fragmentShowData, ProgressBar loadingBar, View mainView, TextView tvInfo, FragmentSearchData fragmentSearchData) {
         this.context = context;
         this.data = data;
         this.loadingBar = loadingBar;
         this.mainView = mainView;
         this.tvInfo = tvInfo;
         this.fragmentShowData = fragmentShowData;
+        this.fragmentSearchData = fragmentSearchData;
 
     }
 
     @Override
     protected void onPreExecute() {
+        db = new DBHelper(context);
+        if(fragmentSearchData != null) {
+            db.clearTbStop();
+        }
+
         counterLoadingBar = 0;
         countTotalWord = 0;
         //memecah data
@@ -162,21 +170,60 @@ public class Stoplist extends AsyncTask<Void, String, List<Map<String, String>>>
 
     @Override
     protected void onPostExecute(List<Map<String, String>> data) {
-        endTime = System.currentTimeMillis();
-        Log.d(TAG_LOG_D, "Done, Time spent = " + (endTime-startTime)/1000 + " seconds");
         loadingBar.setVisibility(View.GONE);
         tvInfo.setVisibility(View.GONE);
         mainView.setVisibility(View.VISIBLE);
-        SimpleAdapter adapter = new SimpleAdapter(context, data,
-                R.layout.listview_row,
-                new String[]{"id", "content", "title"},
-                new int[]{R.id.tvId,
-                        R.id.tvJudul});
 
-        Toast.makeText(context, "Task done in " + (endTime-startTime)/1000 + " seconds", Toast.LENGTH_SHORT).show();
 
-        fragmentShowData.setData(data, "");
-        fragmentShowData.setAdapter(adapter, "stoplist");
+        /*
+        if (fragmentSearchData != null) {
+            loadingBar.setProgress(0);
+            if (!db.isTBDataStemmingEmpty()) {
+                Indexing indexing = new Indexing(context, null, loadingBar, mainView, tvInfo, fragmentSearchData);
+                indexing.execute();
+            }
+        }
+        */
+        /*
+        if (fragmentSearchData != null) {
+            loadingBar.setProgress(0);
+            if (!db.isTBDataIndexEmpty()) {
+                Bobot bobot = new Bobot(context, null, loadingBar, mainView, tvInfo, fragmentSearchData);
+                bobot.execute();
+            }
+        }
+        */
+        /*
+        if (fragmentSearchData != null) {
+            loadingBar.setProgress(0);
+            if (!db.isTBDataIndexEmpty()) {
+                Vektor vektor = new Vektor(context, null, loadingBar, mainView, tvInfo);
+                vektor.execute();
+            }
+        }
+         */
+        if(fragmentSearchData != null){
+            loadingBar.setProgress(0);
+            try {
+                Stemming stemming = new Stemming(data, context, null, loadingBar, mainView, tvInfo, fragmentSearchData);
+                stemming.execute();
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }else {
+            endTime = System.currentTimeMillis();
+            Log.d(TAG_LOG_D, "Done, Time spent = " + (endTime - startTime) / 1000 + " seconds");
+            SimpleAdapter adapter = new SimpleAdapter(context, data,
+                    R.layout.listview_row,
+                    new String[]{"id", "content", "title"},
+                    new int[]{R.id.tvId,
+                            R.id.tvJudul});
+
+            Toast.makeText(context, "Task done in " + (endTime - startTime) / 1000 + " seconds", Toast.LENGTH_SHORT).show();
+
+            fragmentShowData.setData(data, "");
+            fragmentShowData.setAdapter(adapter, "stoplist");
+        }
     }
 
 

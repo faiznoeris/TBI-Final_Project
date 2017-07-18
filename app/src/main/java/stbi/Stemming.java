@@ -21,6 +21,7 @@ import java.util.Map;
 
 import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.R;
+import fragment.FragmentSearchData;
 import fragment.FragmentShowData;
 
 /**
@@ -35,12 +36,15 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
     int counterLoadingBar = 0;
 
     FragmentShowData fragmentShowData;
+    FragmentSearchData fragmentSearchData;
     DBHelper db;
     Context context;
 
     ProgressBar loadingBar;
     View mainView;
     TextView tvInfo;
+
+    int totalword;
 
 
     Map<String, String> map;
@@ -55,29 +59,35 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
     long startTime, endTime;
 
     public static int totalWord;
-    String str_id,str_content,str_title;
+    String str_id, str_content, str_title;
     private Handler progressHandler = new Handler();
 
-    public Stemming(List<Map<String, String>> data, Context context, FragmentShowData fragmentShowData, ProgressBar loadingBar, View mainView, TextView tvInfo) throws IOException {
+    public Stemming(List<Map<String, String>> data, Context context, FragmentShowData fragmentShowData, ProgressBar loadingBar, View mainView, TextView tvInfo, FragmentSearchData fragmentSearchData) throws IOException {
         this.fragmentShowData = fragmentShowData;
         this.context = context;
         this.data = data;
         this.tvInfo = tvInfo;
         this.loadingBar = loadingBar;
         this.mainView = mainView;
+        this.fragmentSearchData = fragmentSearchData;
     }
 
     @Override
     protected void onPreExecute() {
+        db = new DBHelper(context);
+        if (fragmentSearchData != null) {
+            db.clearTbStem();
+        }
+
         counterLoadingBar = 0;
         totalWord = 0;
         for (Map<String, String> tempmap : data) {
             for (Map.Entry<String, String> entry : tempmap.entrySet()) {
                 if (entry.getKey().equals("content") && !(entry.getValue() == null)) {
                     content.add(entry.getValue());
-                } else if(entry.getKey().equals("id") && !(entry.getValue() == null)){
+                } else if (entry.getKey().equals("id") && !(entry.getValue() == null)) {
                     id.add(entry.getValue());
-                } else if(entry.getKey().equals("title") && !(entry.getValue() == null)){
+                } else if (entry.getKey().equals("title") && !(entry.getValue() == null)) {
                     title.add(entry.getValue());
                 }
             }
@@ -85,9 +95,15 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
 
         for (int i = 0; i < content.size(); i++) {
             word = content.get(i).split(" ");
+            totalword += word.length;
         }
 
-        loadingBar.setMax(word.length);
+        //if(fragmentSearchData != null) {
+            loadingBar.setMax(totalword);
+        /*}else{
+            loadingBar.setMax(word.length);
+        }*/
+
         loadingBar.setVisibility(View.VISIBLE);
 
         mainView.setVisibility(View.GONE);
@@ -99,7 +115,6 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
     @Override
     protected List<Map<String, String>> doInBackground(Void... params) {
         db = new DBHelper(context);
-
 
 
         try {
@@ -122,8 +137,7 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
                     }
 
 
-
-                    Log.d(TAG_LOG_D, "Sebelum stem: " + lowered + " - " + String.valueOf(db.isKataDasar(lowered)));
+                    Log.d(TAG_LOG_D, "Sebelum stem: " + lowered + " - " + String.valueOf(db.isKataDasar(lowered)) + " ID: " + id.get(i));
 
                     //Langkah 1 - Penghapusan Partikel
                     if (db.isKataDasar(lowered) == false) {
@@ -178,7 +192,9 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
                         } else if (depan_2.equalsIgnoreCase("me")) {
                             word[j] = word[j].substring(2, word[j].length());
                         } else if (depan_4.equalsIgnoreCase("peng")) {
-                            word[j] = word[j].substring(4, word[j].length());
+                            if (!word[j].equalsIgnoreCase("pengertian")) {
+                                word[j] = word[j].substring(4, word[j].length());
+                            }
                         } else if (depan_4.equalsIgnoreCase("peny")) {
                             word[j] = "S" + word[j].substring(4, word[j].length());
                         } else if (depan_3.equalsIgnoreCase("pen")) {
@@ -190,7 +206,10 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
                         } else if (depan_3.equalsIgnoreCase("ter")) {
                             word[j] = word[j].substring(3, word[j].length());
                         } else if (depan_2.equalsIgnoreCase("ke")) {
-                            word[j] = word[j].substring(2, word[j].length());
+                            if (word[j].equalsIgnoreCase("kerja")) {
+                                word[j] = word[j].substring(2, word[j].length());
+                            }
+
                         }
                     }
 
@@ -233,11 +252,16 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
                     progressHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            loadingBar.setProgress(counterLoadingBar);
-                            tvInfo.setText("Current Progress = Stemming words | " + counterLoadingBar + " / " + word.length);
+                            /*if(fragmentSearchData != null) {
+                                loadingBar.setProgress(counterLoadingBar);
+                                tvInfo.setText("Current Progress = Stemming words | " + counterLoadingBar + " / " + word.length);
+                            }else{*/
+                                loadingBar.setProgress(counterLoadingBar);
+                                tvInfo.setText("Current Progress = Stemming words | " + counterLoadingBar + " / " + totalword);
+                            //}
                         }
                     });
-                    Log.d(TAG_LOG_D, "Hasil stem: " + word[j]);
+                    Log.d(TAG_LOG_D, "Hasil stem: " + word[j] + " ID: " + id.get(i));
                 }
                 //penyatuan kembali kata-kata yang distem
                 StringBuilder builder = new StringBuilder();
@@ -247,7 +271,8 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
                 Log.d(TAG_LOG_D, "Kalimat akhir: " + builder.toString());
                 content.set(i, builder.toString());
             }
-        }catch (Exception e){
+
+        } catch (Exception e) {
             e.printStackTrace();
             progressHandler.post(new Runnable() {
                 @Override
@@ -256,21 +281,26 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
                 }
             });
             endTime = System.currentTimeMillis();
-            Log.d(TAG_LOG_D, "ERROR, Time spent = " + (endTime-startTime)/1000 + " seconds | Total Words Stemmed = " + totalWord);
+            Log.d(TAG_LOG_D, "ERROR, Time spent = " + (endTime - startTime) / 1000 + " seconds | Total Words Stemmed = " + totalWord);
         }
 
         //memasukkan data kedalam list
         data.clear();
-        for(int i = 0; i < content.size(); i++){
+        for (int i = 0; i < content.size(); i++) {
             str_id = id.get(i);
             str_content = content.get(i);
             str_title = title.get(i);
             map = new HashMap<>(2);
-            map.put("id",str_id);
-            map.put("content",str_content);
-            map.put("title",str_title);
+            map.put("id", str_id);
+            map.put("content", str_content);
+            map.put("title", str_title);
             data.add(map);
-            if (!(db.isDataStemmingExist(str_id))) {
+            if (!(db.isDataStemmingExist(str_id)) && fragmentSearchData == null) {
+                if (db.addDataStemming(str_id, str_content, str_title)) {
+                    //counter++;
+                    Log.d(TAG_LOG_D, "Data Stemming Inserted. (" + str_id + ", " + str_title + ")");
+                }
+            }else{
                 if (db.addDataStemming(str_id, str_content, str_title)) {
                     //counter++;
                     Log.d(TAG_LOG_D, "Data Stemming Inserted. (" + str_id + ", " + str_title + ")");
@@ -279,27 +309,39 @@ public class Stemming extends AsyncTask<Void, String, List<Map<String, String>>>
             Log.d(TAG_LOG_D, "Data Stemming added - " + str_id);
         }
 
+        db.close();
+
         return data;
     }
 
     @Override
     protected void onPostExecute(List<Map<String, String>> maps) {
-        endTime = System.currentTimeMillis();
-        Log.d(TAG_LOG_D, "Done, Time spent = " + (endTime-startTime)/1000 + " seconds | Total Words Stemmed = " + totalWord);
         loadingBar.setVisibility(View.GONE);
         tvInfo.setVisibility(View.GONE);
         mainView.setVisibility(View.VISIBLE);
-        //set adapter
-        SimpleAdapter adapter = new SimpleAdapter(context, maps,
-                R.layout.listview_row,
-                new String[]{"id", "content"},
-                new int[]{R.id.tvId,
-                        R.id.tvJudul});
 
-        Toast.makeText(context, "Task done in " + (endTime-startTime)/1000 + " seconds", Toast.LENGTH_SHORT).show();
+        if (fragmentSearchData != null) {
+            loadingBar.setProgress(0);
+            if (!db.isTBDataStemmingEmpty()) {
+                Indexing indexing = new Indexing(context, null, loadingBar, mainView, tvInfo, fragmentSearchData);
+                indexing.execute();
+            }
+        } else {
+            endTime = System.currentTimeMillis();
+            Log.d(TAG_LOG_D, "Done, Time spent = " + (endTime - startTime) / 1000 + " seconds | Total Words Stemmed = " + totalWord);
 
-        fragmentShowData.setData(data, "");
-        fragmentShowData.setAdapter(adapter, "stemming");
+            //set adapter
+            SimpleAdapter adapter = new SimpleAdapter(context, maps,
+                    R.layout.listview_row,
+                    new String[]{"id", "content"},
+                    new int[]{R.id.tvId,
+                            R.id.tvJudul});
+
+            Toast.makeText(context, "Task done in " + (endTime - startTime) / 1000 + " seconds", Toast.LENGTH_SHORT).show();
+
+            fragmentShowData.setData(data, "");
+            fragmentShowData.setAdapter(adapter, "stemming");
+        }
     }
 
     @Override

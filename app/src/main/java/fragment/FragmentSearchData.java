@@ -1,5 +1,6 @@
 package fragment;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -7,6 +8,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,6 +20,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -37,6 +40,10 @@ import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.MainActivity;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.R;
 import stbi.AmbilCache;
+import stbi.Bobot;
+import stbi.Indexing;
+import stbi.Stoplist;
+import stbi.Vektor;
 
 /**
  * Created by Vellfire on 31/05/2017.
@@ -47,6 +54,9 @@ public class FragmentSearchData extends Fragment {
     ListView listData;
     EditText keyword;
     TableRow trHeader;
+    ProgressBar loadingBarHorizontal;
+    TextView tvInfo;
+    View mainView;
 
     DBHelper db;
 
@@ -57,6 +67,7 @@ public class FragmentSearchData extends Fragment {
 
     Map<String, String> map;
     List<Map<String, String>> data = new ArrayList<>();
+    List<Map<String, String>> data_tostoplist = new ArrayList<>();
 
     @Nullable
     @Override
@@ -67,6 +78,9 @@ public class FragmentSearchData extends Fragment {
         listData = (ListView) rootView.findViewById(R.id.listData);
         keyword = (EditText) rootView.findViewById(R.id.etKeyword);
         trHeader = (TableRow) rootView.findViewById(R.id.trKonten);
+        loadingBarHorizontal = (ProgressBar) rootView.findViewById(R.id.progress);
+        tvInfo = (TextView) rootView.findViewById(R.id.progressinfo);
+        mainView = rootView.findViewById(R.id.tampilan);
 
         db = new DBHelper(getContext());
 
@@ -76,7 +90,7 @@ public class FragmentSearchData extends Fragment {
                 Value = keyword.getText().toString();
                 if (Value.equals("")) {
                     Toast.makeText(getContext(), "Keyword kosong!", Toast.LENGTH_SHORT).show();
-                }else {
+                } else {
                     AmbilCache ambilCache = new AmbilCache(getContext(), FragmentSearchData.this);
                     ambilCache.execute(keyword.getText().toString());
                 }
@@ -86,17 +100,42 @@ public class FragmentSearchData extends Fragment {
         listData.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                HashMap<String,String> map =(HashMap<String,String>)listData.getItemAtPosition(position);
+                HashMap<String, String> map = (HashMap<String, String>) listData.getItemAtPosition(position);
                 //String id_click = map.get("title");
                 //String cKey = map.get("countkeyword");
                 String link = map.get("link");
-               // Toast.makeText(getContext(), "Judul: " + id_click + " || Jumlah keyword muncul: " + cKey, Toast.LENGTH_SHORT).show();
+                // Toast.makeText(getContext(), "Judul: " + id_click + " || Jumlah keyword muncul: " + cKey, Toast.LENGTH_SHORT).show();
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
                 startActivity(browserIntent);
 
                 Toast.makeText(getContext(), link + " | " + map.get("title"), Toast.LENGTH_SHORT).show();
             }
         });
+
+        data_tostoplist.clear();
+        if (!(db.isTBDataUtamaEmpty())) {
+            Cursor rs = db.getAllDataUtama();
+            if (rs.moveToFirst()) {
+                while (rs.isAfterLast() == false) {
+                    map = new HashMap<>(2);
+                    id = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN));
+                    konten = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_KONTEN));
+                    judul = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_JUDUL));
+                    if(id == "116"){
+                        continue;
+                    }
+                    //Log.d("AS", "Judul" + judul);
+                    map.put("id", id);
+                    map.put("content", konten);
+                    map.put("title", judul);
+                    //map.put("removedword", rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_REMOVEDWORD)));
+                    data_tostoplist.add(map);
+                    rs.moveToNext();
+                }
+            }
+            rs.close();
+        }
+
 
         ((MainActivity) getActivity()).setActionBarTitle("STBI");
 
@@ -127,7 +166,6 @@ public class FragmentSearchData extends Fragment {
         adapter.setViewBinder(binder);
 
 
-
         trHeader.setVisibility(View.VISIBLE);
         listData.setVisibility(View.VISIBLE);
         listData.setAdapter(adapter);
@@ -146,11 +184,11 @@ public class FragmentSearchData extends Fragment {
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
-        MenuItem item=menu.findItem(R.id.action_getdata);
+        MenuItem item = menu.findItem(R.id.action_getdata);
         item.setVisible(true);
-        MenuItem item2=menu.findItem(R.id.action_searchdata);
+        MenuItem item2 = menu.findItem(R.id.action_searchdata);
         item2.setVisible(false);
-        MenuItem item3=menu.findItem(R.id.action_back);
+        MenuItem item3 = menu.findItem(R.id.action_back);
         item3.setVisible(false);
         MenuItem item4 = menu.findItem(R.id.action_refresh);
         item4.setVisible(false);
@@ -172,6 +210,8 @@ public class FragmentSearchData extends Fragment {
         item12.setVisible(false);
         MenuItem item13 = menu.findItem(R.id.action_clearcache);
         item13.setVisible(false);
+        MenuItem item14 = menu.findItem(R.id.action_clearstem);
+        item14.setVisible(false);
     }
 
     @Override
@@ -181,7 +221,67 @@ public class FragmentSearchData extends Fragment {
             FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
             ft.replace(R.id.mainFrame, new FragmentShowData());
             ft.commit();
+        } else if (id == R.id.action_prosesall) {
+            /*FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
+            ft.replace(R.id.mainFrame, new FragmentShowData());
+            ft.commit();*/
+
+            //add parameter to check if its a proses all
+            //delete tb cache first
+            AlertDialog diaBox = dialogProsesAll();
+            diaBox.show();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private AlertDialog dialogProsesAll() {
+        AlertDialog myQuittingDialogBox = new AlertDialog.Builder(getContext())
+                .setTitle("Proses")
+                .setMessage("Proses semua data sekarang?")
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        db.clearTbCache();
+                        /*if (!db.isTBDataIndexEmpty()) {
+                            Bobot bobot = new Bobot(getContext(), null, loadingBarHorizontal, mainView, tvInfo, FragmentSearchData.this);
+                            bobot.execute();
+                        }*/
+                        /*
+                        if (!db.isTBDataIndexEmpty()) {
+
+                            Vektor vektor = new Vektor(getContext(), null, loadingBarHorizontal, mainView, tvInfo);
+                            vektor.execute();
+                        }
+                        */
+                        /*if (!db.isTBDataStemmingEmpty()) {
+                            Indexing indexing = new Indexing(getContext(), null, loadingBarHorizontal, mainView, tvInfo, FragmentSearchData.this);
+                            indexing.execute();
+                        }*/
+
+                        Stoplist stoplist = new Stoplist(data_tostoplist, getContext(), null, loadingBarHorizontal, mainView, tvInfo, FragmentSearchData.this);
+                        stoplist.execute();
+
+                        /*
+                        if (!db.isTBDataStemmingEmpty()) {
+                            Indexing indexing = new Indexing(getContext(), null, loadingBarHorizontal, mainView, tvInfo);
+                            indexing.execute();
+                        }
+                        if (!db.isTBDataIndexEmpty()) {
+                            Bobot bobot = new Bobot(getContext(), null, loadingBarHorizontal, mainView, tvInfo);
+                            bobot.execute();
+                        }
+                        if (!db.isTBDataIndexEmpty()) {
+                            Vektor bobot = new Vektor(getContext(), null, loadingBarHorizontal, mainView, tvInfo);
+                            bobot.execute();
+                        }
+                        */
+                    }
+                })
+                .create();
+        return myQuittingDialogBox;
     }
 }

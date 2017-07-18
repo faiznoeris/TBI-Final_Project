@@ -11,6 +11,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
 import fragment.FragmentShowData;
@@ -40,8 +43,12 @@ public class Vektor extends AsyncTask<Void, String, Void> {
     FragmentShowData fragmentShowData;
     Context context;
 
-    //Map<String, String> map;
-    ArrayList<String> term_temp = new ArrayList<String>();
+    Map<String, String> map;
+    ArrayList<Integer> index_count_list = new ArrayList<Integer>();
+    ArrayList<Integer> id_list = new ArrayList<Integer>();
+    ArrayList<Double> bobot_list = new ArrayList<Double>();
+    List<Map<String, String>> data = new ArrayList<>();
+    List<Map<String, String>> data2 = new ArrayList<>();
 
     private Handler progressHandler = new Handler();
 
@@ -75,70 +82,134 @@ public class Vektor extends AsyncTask<Void, String, Void> {
 
     @Override
     protected Void doInBackground(Void... params) {
+        db = new DBHelper(context);
         Cursor rs = db.getAllDataIndex();
         int id_before;
         boolean addtodb = true;
         //int counter = 0;
 
-
-
-        if(rs.moveToFirst()){
-            counterLoadingBar++;
-            progressHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    loadingBar.setProgress(counterLoadingBar);
-                    tvInfo.setText("Current Progress = Vektor | " + counterLoadingBar + " / " + sizestem + " dokumen");
+        if (!(db.isTBDataIndexEmpty())) {
+            rs = db.getAllDataIndex();
+            if (rs.moveToFirst()) {
+                while (rs.isAfterLast() == false) {
+                    map = new HashMap<>(2);
+                    map.put("idkonten", rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN)));
+                    data.add(map);
+                    rs.moveToNext();
                 }
-            });
-            while(!rs.isAfterLast()){
-                id_before = rs.getInt(rs.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN));
-
-                Cursor rs2 = db.getBobotFromIndex(id_before);
-                //counter = 0;
-
-                if(rs2.moveToFirst()) {
-                    while (!rs2.isAfterLast()) {
-                        bobot = rs2.getInt(rs2.getColumnIndex(DBHelper.DATA_COLUMN_BOBOT));
-
-                        panjangvektor += bobot * bobot;
-                        //counter++;
-                        //Log.d(TAG_LOG_D, "PANJANGVEKTOR: " + panjangvektor + " | counter: " + counter);
-
-                        rs2.moveToNext();
-                    }
-                    rs2.close();
-                }
-
-                panjangvektor = Math.sqrt(panjangvektor);
-
-                if(addtodb){
-                    if(db.addTbVektor(id_before, panjangvektor)){
-                        Log.d(TAG_LOG_D, "ADD TO DB | ID: " + id_before + " PANJANGVEKTOR: " + panjangvektor);
-                        addtodb = false;
-                    }
-                }
-
-                if(id != id_before && id != 0) {
-                    counterLoadingBar++;
-                    if(db.addTbVektor(id_before, panjangvektor)){
-                        Log.d(TAG_LOG_D, "ADD TO DB | ID: " + id_before + " PANJANGVEKTOR: " + panjangvektor);
-                    }
-                    progressHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            loadingBar.setProgress(counterLoadingBar);
-                            tvInfo.setText("Current Progress = Vektor | " + counterLoadingBar + " / " + sizestem + " dokumen");
-                        }
-                    });
-                }
-
-                id = rs.getInt(rs.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN));
-
-                rs.moveToNext();
             }
             rs.close();
         }
+
+        for (Map<String, String> tempmap : data) {
+            for (Map.Entry<String, String> entry : tempmap.entrySet()) {
+                if (entry.getKey().equals("idkonten") && !(entry.getValue() == null)) {
+                    id_list.add(Integer.parseInt(entry.getValue()));
+                }
+            }
+        }
+
+        for (int i = 0; i < data.size(); i++) {
+            id_before = id_list.get(i);
+            Cursor rs2 = db.getBobotFromIndex(id_before);
+
+            if (rs2.moveToFirst()) {
+                while (!rs2.isAfterLast()) {
+                    bobot = rs2.getInt(rs2.getColumnIndex(DBHelper.DATA_COLUMN_BOBOT));
+
+                    panjangvektor += bobot * bobot;
+
+                    rs2.moveToNext();
+                }
+                rs2.close();
+            }
+
+            panjangvektor = Math.sqrt(panjangvektor);
+
+            if (addtodb) {
+                if (db.addTbVektor(id_before, panjangvektor)) {
+                    Log.d(TAG_LOG_D, "ADD TO DB | ID: " + id_before + " PANJANGVEKTOR: " + panjangvektor);
+                    addtodb = false;
+                }
+            }
+
+            if (id != id_before && id != 0) {
+                counterLoadingBar++;
+                if (db.addTbVektor(id_before, panjangvektor)) {
+                    Log.d(TAG_LOG_D, "ADD TO DB | ID: " + id_before + " PANJANGVEKTOR: " + panjangvektor);
+                }
+                progressHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadingBar.setProgress(counterLoadingBar);
+                        tvInfo.setText("Current Progress = Vektor | " + counterLoadingBar + " / " + sizestem + " dokumen");
+                    }
+                });
+            }
+
+            id = id_list.get(i);
+
+            rs.moveToNext();
+        }
+
+
+//        if(rs.moveToFirst()){
+//            counterLoadingBar++;
+//            progressHandler.post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    loadingBar.setProgress(counterLoadingBar);
+//                    tvInfo.setText("Current Progress = Vektor | " + counterLoadingBar + " / " + sizestem + " dokumen");
+//                }
+//            });
+//            while(!rs.isAfterLast()){
+//                id_before = rs.getInt(rs.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN));
+//
+//                Cursor rs2 = db.getBobotFromIndex(id_before);
+//                //counter = 0;
+//
+//                if(rs2.moveToFirst()) {
+//                    while (!rs2.isAfterLast()) {
+//                        bobot = rs2.getInt(rs2.getColumnIndex(DBHelper.DATA_COLUMN_BOBOT));
+//
+//                        panjangvektor += bobot * bobot;
+//                        //counter++;
+//                        //Log.d(TAG_LOG_D, "PANJANGVEKTOR: " + panjangvektor + " | counter: " + counter);
+//
+//                        rs2.moveToNext();
+//                    }
+//                    rs2.close();
+//                }
+//
+//                panjangvektor = Math.sqrt(panjangvektor);
+//
+//                if(addtodb){
+//                    if(db.addTbVektor(id_before, panjangvektor)){
+//                        Log.d(TAG_LOG_D, "ADD TO DB | ID: " + id_before + " PANJANGVEKTOR: " + panjangvektor);
+//                        addtodb = false;
+//                    }
+//                }
+//
+//                if(id != id_before && id != 0) {
+//                    counterLoadingBar++;
+//                    if(db.addTbVektor(id_before, panjangvektor)){
+//                        Log.d(TAG_LOG_D, "ADD TO DB | ID: " + id_before + " PANJANGVEKTOR: " + panjangvektor);
+//                    }
+//                    progressHandler.post(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            loadingBar.setProgress(counterLoadingBar);
+//                            tvInfo.setText("Current Progress = Vektor | " + counterLoadingBar + " / " + sizestem + " dokumen");
+//                        }
+//                    });
+//                }
+//
+//                id = rs.getInt(rs.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN));
+//
+//                rs.moveToNext();
+//            }
+//            rs.close();
+//        }
         return null;
     }
 
@@ -147,7 +218,7 @@ public class Vektor extends AsyncTask<Void, String, Void> {
         endTime = System.currentTimeMillis();
         Log.d(TAG_LOG_D, "Done, Time spent = " + (endTime - startTime) / 1000 + " seconds");
         Log.d(TAG_LOG_D, "Done, " + counterLoadingBar + " data dihitung panjang vektornya.");
-        Toast.makeText(context, "Task done in " + (endTime-startTime)/1000 + " seconds", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, "Task done in " + (endTime - startTime) / 1000 + " seconds", Toast.LENGTH_SHORT).show();
         loadingBar.setVisibility(View.GONE);
         tvInfo.setVisibility(View.GONE);
         mainView.setVisibility(View.VISIBLE);

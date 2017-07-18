@@ -231,9 +231,12 @@ public class FragmentShowData extends Fragment {
         item.setVisible(false);
         MenuItem item2 = menu.findItem(R.id.action_searchdata);
         item2.setVisible(false);
+
         MenuItem item3 = menu.findItem(R.id.action_back);
         item3.setVisible(true);
 
+        MenuItem item4 = menu.findItem(R.id.action_prosesall);
+        item4.setVisible(false);
 
     }
 
@@ -277,14 +280,14 @@ public class FragmentShowData extends Fragment {
             diaBox.show();
         } else if (id == R.id.action_index){
             if(!db.isTBDataStemmingEmpty()) {
-                Indexing indexing = new Indexing(getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
+                Indexing indexing = new Indexing(getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo, null);
                 indexing.execute();
             }else{
                 Toast.makeText(getContext(), "Data stemming masih kosong!", Toast.LENGTH_SHORT).show();
             }
         } else if(id == R.id.action_bobot){
             if(!db.isTBDataIndexEmpty()) {
-                Bobot bobot = new Bobot(getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
+                Bobot bobot = new Bobot(getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo, null);
                 bobot.execute();
             }else{
                 Toast.makeText(getContext(), "Data index masih kosong!", Toast.LENGTH_SHORT).show();
@@ -294,8 +297,8 @@ public class FragmentShowData extends Fragment {
             diaBox.show();
         } else if(id == R.id.action_vektor){
             if(!db.isTBDataIndexEmpty()) {
-                Vektor bobot = new Vektor(getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
-                bobot.execute();
+                Vektor vektor = new Vektor(getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
+                vektor.execute();
             }else{
                 Toast.makeText(getContext(), "Data index masih kosong!", Toast.LENGTH_SHORT).show();
             }
@@ -330,6 +333,13 @@ public class FragmentShowData extends Fragment {
             }else{
                 Toast.makeText(getContext(), "Data cache masih kosong!", Toast.LENGTH_SHORT).show();
             }
+        }else if(id == R.id.action_clearstem){
+            if(!db.isTBDataStemmingEmpty()) {
+                AlertDialog diaBox = dialogClearStem();
+                diaBox.show();
+            }else{
+                Toast.makeText(getContext(), "Data stem masih kosong!", Toast.LENGTH_SHORT).show();
+            }
         }
 
         return super.onOptionsItemSelected(item);
@@ -362,7 +372,7 @@ public class FragmentShowData extends Fragment {
                         if (counter == 0) {
                             if (db.isTBDataStoplistEmpty()) {
                                 //showProgress(true);
-                                Stoplist stoplist = new Stoplist(data, getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
+                                Stoplist stoplist = new Stoplist(data, getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo, null);
                                 stoplist.execute();
                                 counter++;
                             }
@@ -395,6 +405,25 @@ public class FragmentShowData extends Fragment {
         return myQuittingDialogBox;
     }
 
+
+    private AlertDialog dialogClearStem() {
+        AlertDialog myQuittingDialogBox = new AlertDialog.Builder(getContext())
+                .setTitle("Clear Table Stem")
+                .setMessage("Clear table stem sekarang?")
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        db.clearTbStem();
+                        Toast.makeText(getContext(), "Table stem berhasil diclear.", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .create();
+        return myQuittingDialogBox;
+    }
 
     private AlertDialog dialogRefresh() {
         AlertDialog myQuittingDialogBox = new AlertDialog.Builder(getContext())
@@ -441,7 +470,7 @@ public class FragmentShowData extends Fragment {
                                 map.put("title", title);
 
                                 data_stemming.add(map);
-                                Stemming stemming = new Stemming(data_stemming, getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo);
+                                Stemming stemming = new Stemming(data_stemming, getContext(), FragmentShowData.this, loadingBarHorizontal, mainView, tvInfo, null);
                                 stemming.execute();
                                 counter++;
                             }else{
@@ -506,7 +535,6 @@ public class FragmentShowData extends Fragment {
                 //finalJson = stringBuffer.toString();
                 parentObject = new JSONObject(stringBuffer.toString());
 
-                Log.d("ASU", "PAGES " + parentObject.getString("pages"));
             } catch (Exception er) {
                 er.printStackTrace();
             }
@@ -519,7 +547,6 @@ public class FragmentShowData extends Fragment {
             try {
                 FragmentShowData.totalPages = Integer.parseInt(res.getString("pages"));
                 FragmentShowData.totalData = Integer.parseInt(res.getString("count_total"));
-                Log.d("ASU", "PAGES post execute" + totalData + " , " + totalPages);
                 JSONParsing jsonParsing = new JSONParsing(FragmentShowData.this, getContext(), loadingBarHorizontal, mainView, tvInfo, totalPages, totalData);
                 jsonParsing.execute();
             }catch (Exception e){

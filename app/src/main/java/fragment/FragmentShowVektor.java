@@ -137,6 +137,10 @@ public class FragmentShowVektor extends Fragment {
         item12.setVisible(false);
         MenuItem item13 = menu.findItem(R.id.action_clearcache);
         item13.setVisible(false);
+        MenuItem item14 = menu.findItem(R.id.action_clearstem);
+        item14.setVisible(false);
+        MenuItem item15 = menu.findItem(R.id.action_prosesall);
+        item15.setVisible(false);
 
     }
 

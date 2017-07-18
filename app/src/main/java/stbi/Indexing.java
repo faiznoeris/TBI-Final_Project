@@ -20,6 +20,7 @@ import java.util.Map;
 
 import faiznoeris.tbitugaspraktek.temubalikinformasi.DBHelper;
 import faiznoeris.tbitugaspraktek.temubalikinformasi.R;
+import fragment.FragmentSearchData;
 import fragment.FragmentShowData;
 
 /**
@@ -45,19 +46,22 @@ public class Indexing extends AsyncTask<Void, String, Void> {
     TextView tvInfo;
 
     FragmentShowData fragmentShowData;
+    FragmentSearchData fragmentSearchData;
     Context context;
 
     //Map<String, String> map;
     ArrayList<String> term_temp = new ArrayList<String>();
+    List<Map<String, String>> data;
 
     private Handler progressHandler = new Handler();
 
-    public Indexing(Context context, FragmentShowData fragmentShowData, ProgressBar loadingBar, View mainView, TextView tvInfo) {
+    public Indexing(Context context, FragmentShowData fragmentShowData, ProgressBar loadingBar, View mainView, TextView tvInfo, FragmentSearchData fragmentSearchData) {
         this.context = context;
         this.loadingBar = loadingBar;
         this.mainView = mainView;
         this.tvInfo = tvInfo;
         this.fragmentShowData = fragmentShowData;
+        this.fragmentSearchData = fragmentSearchData;
     }
 
     @Override
@@ -98,6 +102,10 @@ public class Indexing extends AsyncTask<Void, String, Void> {
                 str_id = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN));
                 str_content = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_KONTEN));
 
+                if(str_id == "116"){
+                    continue;
+                }
+
                 term_split = str_content.split(" ");
 
 
@@ -109,9 +117,9 @@ public class Indexing extends AsyncTask<Void, String, Void> {
                         term_split[i] = term_split[i].replaceAll("\\W+", "");
 
                         //Log.d(TAG_LOG_D, "TERM AFTER REMOVING: " + term_split[i]);
-                        if(term_split[i].matches(".*\\d+.*") && !term_split[i].matches(".*\\w+.*")){
+                        if (term_split[i].matches(".*\\d+.*") && !term_split[i].matches(".*\\w+.*")) {
                             //
-                        }else{
+                        } else {
                             //Log.d(TAG_LOG_D, "TERM ADDED TO MAP " + term_split[i].toLowerCase());
                             term_temp.add(term_split[i].toLowerCase());
                         }
@@ -150,13 +158,23 @@ public class Indexing extends AsyncTask<Void, String, Void> {
 
     @Override
     protected void onPostExecute(Void res) {
-        endTime = System.currentTimeMillis();
-        Log.d(TAG_LOG_D, "Done, Time spent = " + (endTime - startTime) / 1000 + " seconds");
-        Log.d(TAG_LOG_D, "Done, " + counterLoadingBar + " data indexed.");
-        Toast.makeText(context, "Task done in " + (endTime-startTime)/1000 + " seconds", Toast.LENGTH_SHORT).show();
+
         loadingBar.setVisibility(View.GONE);
         tvInfo.setVisibility(View.GONE);
         mainView.setVisibility(View.VISIBLE);
+
+        if (fragmentSearchData != null) {
+            loadingBar.setProgress(0);
+            if (!db.isTBDataIndexEmpty()) {
+                Bobot bobot = new Bobot(context, null, loadingBar, mainView, tvInfo, fragmentSearchData);
+                bobot.execute();
+            }
+        } else {
+            endTime = System.currentTimeMillis();
+            Log.d(TAG_LOG_D, "Done, Time spent = " + (endTime - startTime) / 1000 + " seconds");
+            Log.d(TAG_LOG_D, "Done, " + counterLoadingBar + " data indexed.");
+            Toast.makeText(context, "Task done in " + (endTime - startTime) / 1000 + " seconds", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

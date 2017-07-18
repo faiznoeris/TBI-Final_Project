@@ -20,6 +20,12 @@
         app:showAsAction="always"
         android:icon="@android:drawable/ic_menu_revert"/>
     <item
+        android:id="@+id/action_prosesall"
+        android:orderInCategory="100"
+        android:title="Add Data"
+        app:showAsAction="always"
+        android:icon="@android:drawable/ic_media_play"/>
+    <item
         android:id="@+id/action_refresh"
         android:orderInCategory="100"
         android:title="Refresh data"
@@ -65,6 +71,12 @@
         android:id="@+id/action_clearcache"
         android:orderInCategory="100"
         android:title="Clear cache"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_clearstem"
+        android:orderInCategory="100"
+        android:title="Clear stem"
         app:showAsAction="never" />
 
 
