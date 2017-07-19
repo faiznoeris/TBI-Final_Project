@@ -102,12 +102,7 @@ public class Indexing extends AsyncTask<Void, String, Void> {
                 str_id = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN));
                 str_content = rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_KONTEN));
 
-                if(str_id == "116"){
-                    continue;
-                }
-
                 term_split = str_content.split(" ");
-
 
                 for (int i = 0; i < term_split.length; i++) {
                     //Log.d(TAG_LOG_D, "TERM BEFORE REMOVING: " + term_split[i]);

@@ -722,7 +722,7 @@ public class DBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         try {
             db.delete(DATA_CACHE_TABLE_NAME, null,null);
-            db.execSQL("DELETE FROM SQLITE_SEQUENCE WHERE NAME = '" + DATA_INDEX_TABLE_NAME + "'"); //reset auto increment
+            db.execSQL("DELETE FROM SQLITE_SEQUENCE WHERE NAME = '" + DATA_CACHE_TABLE_NAME + "'"); //reset auto increment
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -922,7 +922,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return null;
     }
 
-    public boolean addTbVektor(String query, int id, double sim) {
+    public boolean addTbCache(String query, int id, double sim) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = null;
         try {

@@ -107,7 +107,7 @@ public class HitungSimiliarity{
                 if(dotproduct > 0.0){
                     similiarity = dotproduct / (panjangQuery * panjang);
 
-                    if(db.addTbVektor(query, id, similiarity)){
+                    if(db.addTbCache(query, id, similiarity)){
                         jumlahmirip++;
                     }
 
@@ -120,7 +120,7 @@ public class HitungSimiliarity{
             Log.d(TAG_LOG_D, "MIRIP: " + jumlahmirip);
 
             if (jumlahmirip == 0) {
-                if(db.addTbVektor(query,id,0)){
+                if(db.addTbCache(query,id,0)){
                     //
                 }
             }
