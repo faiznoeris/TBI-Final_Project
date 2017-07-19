@@ -30,7 +30,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private final Context dbContext;
     //context.getApplicationInfo().dataDir + "/databases/"
 
-    private static final String DATABASE_NAME = "TBI-withcache(last).db";
+    private static final String DATABASE_NAME = "TBI.db";
     private static final String KATADASAR_TABLE_NAME = "tb_katadasar";
     private static final String KATADASAR_COLUMN_ID = "id";
     private static final String KATADASAR_COLUMN_KATADASAR = "katadasar";
