@@ -101,7 +101,7 @@ public class Bobot extends AsyncTask<Void, String, Void> {
                     map = new HashMap<>(2);
                     //Log.d("AS", "Judul" + judul);
                     map.put("count_index", rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_COUNTINDEX)));
-                    map.put("id", rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_IDKONTEN)));
+                    map.put("id", rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_ID)));
                     map.put("term", rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_TERM)));
                     //map.put("removedword", rs.getString(rs.getColumnIndex(DBHelper.DATA_COLUMN_REMOVEDWORD)));
                     data.add(map);
@@ -115,7 +115,7 @@ public class Bobot extends AsyncTask<Void, String, Void> {
             for (Map.Entry<String, String> entry : tempmap.entrySet()) {
                 if (entry.getKey().equals("count_index") && !(entry.getValue() == null)) {
                     index_count_list.add(Integer.parseInt(entry.getValue()));
-                }else if (entry.getKey().equals("idkonten") && !(entry.getValue() == null)) {
+                }else if (entry.getKey().equals("id") && !(entry.getValue() == null)) {
                     id_list.add(entry.getValue());
                 }else if (entry.getKey().equals("term") && !(entry.getValue() == null)) {
                     term_list.add(entry.getValue());
@@ -127,6 +127,7 @@ public class Bobot extends AsyncTask<Void, String, Void> {
         for (int i = 0; i < data.size(); i++) {
             index_count = index_count_list.get(i);
             Nterm = db.getWordFreq(term_list.get(i));
+            id = Integer.parseInt(id_list.get(i));
 
             Log.d(TAG_LOG_D, "BEFORE COUNT: N: " + n + " | NTERM: " + Nterm + " | INDEX_COUNT: " + index_count + " | LOG: " + String.valueOf(Math.log10((n / Nterm))) + " FOR TERM: " + term_list.get(i));
 
